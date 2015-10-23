@@ -1,0 +1,110 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.flink.streaming.test.tool.output;
+
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.typeutils.TypeSerializer;
+import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.apache.flink.streaming.test.tool.util.SerializeUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
+
+import java.io.IOException;
+
+/**
+ * Provides a sink that sends all incoming records using a zeroMQ connection.
+ * Starts sending data as soon as the first record is received.
+ * Signals the end of data when the sink is closed.
+ * @param <IN> record type
+ */
+public class TestSink<IN> extends RichSinkFunction<IN> {
+
+	private Logger LOG = LoggerFactory.getLogger(RichSinkFunction.class);
+
+	private transient Context context;
+	private transient ZMQ.Socket publisher;
+	private TypeSerializer<IN> serializer;
+	private int port;
+
+	public TestSink(int port) {
+		this.port = port;
+	}
+
+
+	@Override
+	public void open(Configuration configuration) {
+		//open a socket to push data
+		context = ZMQ.context(1);
+		publisher = context.socket(ZMQ.PUSH);
+		publisher.connect("tcp://localhost:" + port);
+	}
+
+	/**
+	 * Called when new data arrives at the sink.
+	 * Forwards the records via the zeroMQ publisher.
+	 * @param next incoming records
+	 */
+	@Override
+	public void invoke(IN next) {
+		if (serializer == null) {
+			/*
+			create serializer
+			 */
+			TypeInformation<IN> typeInfo = TypeExtractor.getForObject(next);
+			serializer = typeInfo.createSerializer(getRuntimeContext().getExecutionConfig());
+			/*
+			send serializer to output receiver
+			 */
+			try {
+				publisher.send(SerializeUtil.serialize(serializer));
+			} catch (IOException e) {
+				LOG.error("Could not serialize TypeSerializer",e);
+				return;
+			}
+		}
+		System.out.println("out " + next);
+		/*
+		serialize output and send
+		 */
+		byte[] bytes;
+		try {
+			bytes = SerializeUtil.serialize(next, serializer);
+		} catch (IOException e) {
+			LOG.error("Could not serialize org.apache.flink.streaming.test.input",e);
+			return;
+		}
+		publisher.send(bytes);
+	}
+
+
+
+	@Override
+	public void close() {
+		/*
+		signal close to output receiver
+		 */
+		publisher.send("END".getBytes());
+		publisher.close();
+		context.term();
+	}
+
+}
