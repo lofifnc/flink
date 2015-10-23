@@ -28,7 +28,8 @@ class ListMatchersSpec extends CoreSpec {
       .matches(List(1, 3, 2, 4))
   }
 
-  it should "fail if org.apache.flink.streaming.test.input contains a element that is not expected" in {
+  it should "fail if org.apache.flink.streaming.test.input" +
+    " contains a element that is not expected" in {
     intercept[TestFailedException] {
       ListMatchers
         .containsOnly[Integer](List(1, 3, 2, 4))

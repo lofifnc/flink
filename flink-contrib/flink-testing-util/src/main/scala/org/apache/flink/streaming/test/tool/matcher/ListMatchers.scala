@@ -114,7 +114,9 @@ object ListMatchers extends Matchers {
   }
 
   /**
-   * Provides a [[ListMatcher]] to tests whether a list contains a element more often than another list.
+   * Provides a [[ListMatcher]] to tests whether a list contains
+   * an element more often than another list.
+   *
    * @example List(1,2,2,3,4,4) matched against List(1,2,2) is valid.
    * @param right expected list
    * @tparam T type to match
