@@ -17,7 +17,7 @@
 
 package org.apache.flink.streaming.test.tool.output;
 
-import org.apache.flink.streaming.test.tool.api.output.matcher.MatcherBuilder;
+import org.apache.flink.streaming.test.tool.core.output.matcher.MatcherBuilder;
 
 import java.util.List;
 

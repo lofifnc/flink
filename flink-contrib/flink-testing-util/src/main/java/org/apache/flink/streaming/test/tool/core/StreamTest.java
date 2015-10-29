@@ -15,16 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.api;
+package org.apache.flink.streaming.test.tool.core;
 
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.test.tool.api.output.ExpectedOutput;
+import org.apache.flink.streaming.test.tool.core.output.ExpectedOutput;
 import org.apache.flink.streaming.test.tool.input.EventTimeInput;
 import org.apache.flink.streaming.test.tool.input.Input;
 import org.apache.flink.streaming.test.tool.output.OutputHandler;
 import org.apache.flink.streaming.test.tool.output.OutputVerifier;
 import org.apache.flink.streaming.test.tool.output.TestSink;
+import org.apache.flink.streaming.test.tool.output.assertion.HamcrestVerifier;
 import org.apache.flink.streaming.test.tool.runtime.TestingStreamEnvironment;
 import org.junit.After;
 import org.junit.Before;
@@ -95,6 +96,17 @@ public class StreamTest {
 		TestSink<IN> sink = new TestSink<IN>(currentPort);
 		currentPort++;
 		return sink;
+	}
+
+	/**
+	 * Creates a TestSink using {@link org.hamcrest.Matcher} to verify the output.
+	 * @param matcher of type Iterable<IN>
+	 * @param <IN>
+	 * @return the created sink.
+	 */
+	public <IN> TestSink<IN> createTestSink(org.hamcrest.Matcher<Iterable<IN>> matcher) {
+		OutputVerifier<IN> verifier = new HamcrestVerifier<>(matcher);
+		return createTestSink(verifier);
 	}
 
 	/**

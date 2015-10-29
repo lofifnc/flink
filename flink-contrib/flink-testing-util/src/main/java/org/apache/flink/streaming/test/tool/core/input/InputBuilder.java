@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.api.input;
+package org.apache.flink.streaming.test.tool.core.input;
 
 import org.apache.flink.streaming.test.tool.input.FromEventTimeElementsFunction;
 import org.apache.flink.streaming.test.tool.input.Input;

@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.api.output;
+package org.apache.flink.streaming.test.tool.core.output;
 
-import org.apache.flink.streaming.test.tool.api.output.matcher.MatcherBuilder;
+import org.apache.flink.streaming.test.tool.core.output.matcher.MatcherBuilder;
 import org.apache.flink.streaming.test.tool.output.ListVerifier;
 import org.apache.flink.streaming.test.tool.output.OutputVerifier;
 

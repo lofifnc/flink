@@ -17,17 +17,21 @@
 
 package org.apache.flink.streaming.test.tool;
 
-import org.apache.flink.streaming.test.tool.api.StreamTest;
-import org.apache.flink.streaming.test.tool.api.input.After;
-import org.apache.flink.streaming.test.tool.api.input.EventTimeInputBuilder;
-import org.apache.flink.streaming.test.tool.api.output.ExpectedOutput;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.test.tool.core.StreamTest;
+import org.apache.flink.streaming.test.tool.core.input.After;
+import org.apache.flink.streaming.test.tool.core.input.EventTimeInputBuilder;
+import org.apache.flink.streaming.test.tool.core.output.ExpectedOutput;
+import org.apache.flink.streaming.test.tool.output.assertion.AssertBlock;
+import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 
 public class Test extends StreamTest {
 
@@ -36,16 +40,21 @@ public class Test extends StreamTest {
 
 		//-------------- org.apache.flink.streaming.test.input
 		EventTimeInputBuilder<Tuple2<Integer, String>> input = EventTimeInputBuilder
-				.create(new Tuple2<>(1, "test"))
-				.add(new Tuple2<>(2, "foo"), After.period(10, TimeUnit.SECONDS))
-				.add(new Tuple2<>(3, "bar"), After.period(10, TimeUnit.SECONDS));
+				.create(Tuple2.of(1, "test"))
+				.add(Tuple2.of(2, "boo"), After.period(10, TimeUnit.SECONDS))
+				.add(Tuple2.of(3, "bar"), After.period(10, TimeUnit.SECONDS));
 
 		//-------------- expected output
-		ExpectedOutput<Tuple2<Integer, String>> expectedOutput = new ExpectedOutput<Tuple2<Integer, String>>()
-				.add(new Tuple2<>(3, "test"))
-				.add(new Tuple2<>(3, "bar"));
-		expectedOutput.expect();
+//		ExpectedOutput<Tuple2<Integer, String>> expectedOutput = new ExpectedOutput<Tuple2<Integer, String>>()
+//				.add(new Tuple2<>(3, "test"))
+//				.add(new Tuple2<>(3, "bar"));
+//		expectedOutput.expect();
 
+		OutputMatcher<Tuple2<Integer, String>> matcher =
+				new AssertBlock<Tuple2<Integer,String>>("value","name")
+						.assertThat("value", is(3))
+						.assertThat("name", startsWith("b"))
+						.any().none();
 
 		//------- pipeline definition
 		DataStream<Tuple2<Integer, String>> stream = createDataSource(input);
@@ -53,7 +62,8 @@ public class Test extends StreamTest {
 		stream
 				.timeWindowAll(Time.of(20, TimeUnit.SECONDS))
 				.sum(0)
-				.addSink(createTestSink(expectedOutput));
+				.addSink(createTestSink(matcher));
+
 
 	}
 

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.api.output.matcher;
+package org.apache.flink.streaming.test.tool.core.output.matcher;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.flink.streaming.test.tool.matcher.partial.FromPartialMatcher;

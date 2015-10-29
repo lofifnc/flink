@@ -15,29 +15,33 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.api.input;
+package org.apache.flink.streaming.test.tool.core.output.translator;
 
-import java.util.concurrent.TimeUnit;
+import org.apache.flink.streaming.test.tool.output.OutputVerifier;
+import org.scalatest.exceptions.TestFailedException;
 
-/**
- * Helper for defining a time span between to StreamRecords
- */
-public class After {
-	private long timeSpan;
+public abstract class OutputTranslator<IN,OUT> implements OutputVerifier<IN> {
 
-	public static After period(long time, TimeUnit timeUnit){
-		return new After(time,timeUnit);
+	OutputVerifier<OUT> verifier;
+
+	public OutputTranslator(OutputVerifier<OUT> verifier) {
+		this.verifier = verifier;
 	}
 
-	private After(long time,TimeUnit timeUnit) {
-		this.timeSpan = timeUnit.toMillis(time);
+	public abstract OUT translate(IN record);
+
+	@Override
+	public void init() {
+		verifier.init();
 	}
 
-	/**
-	 * Getter for defined time span
-	 * @return time span in milliseconds
-	 */
-	public long getTimeSpan() {
-		return timeSpan;
+	@Override
+	public void receive(IN elem) throws TestFailedException {
+		verifier.receive(translate(elem));
+	}
+
+	@Override
+	public void finish() throws TestFailedException {
+		verifier.finish();
 	}
 }
