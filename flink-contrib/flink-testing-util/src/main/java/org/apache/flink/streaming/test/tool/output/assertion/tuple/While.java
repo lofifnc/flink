@@ -1,4 +1,4 @@
-package org.apache.flink.streaming.test.tool.output.assertion;
+package org.apache.flink.streaming.test.tool.output.assertion.tuple;
 
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;

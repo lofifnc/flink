@@ -3,6 +3,7 @@ package org.apache.flink.streaming.test.tool.output.assertion;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.test.tool.core.output.map.OutputTable;
+import org.apache.flink.streaming.test.tool.output.assertion.tuple.TupleMapMatchers;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ public class AssertBlock<T extends Tuple> {
 	}
 
 	public ResultMatcher<T> any() {
-		return new ResultMatcher<>(TupleMapMatchers.any(matchers,table));
+		return new ResultMatcher<>(TupleMapMatchers.any(matchers, table));
 	}
 
 	public ResultMatcher<T> each() {

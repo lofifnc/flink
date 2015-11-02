@@ -1,8 +1,10 @@
-package org.apache.flink.streaming.test.tool.output.assertion;
+package org.apache.flink.streaming.test.tool.output.assertion.tuple;
 
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.test.tool.core.output.map.OutputTable;
+import org.apache.flink.streaming.test.tool.output.assertion.tuple.Any;
+import org.apache.flink.streaming.test.tool.output.assertion.tuple.Each;
 import org.hamcrest.Matcher;
 
 /**
@@ -22,7 +24,7 @@ public class TupleMapMatchers {
 	 */
 	public static <T extends Tuple> Matcher<T> any(Iterable<Tuple2<String,Matcher>> matchers,
 																OutputTable<T> table) {
-		return Any.any(matchers,table);
+		return Any.any(matchers, table);
 	}
 
 	/**
@@ -35,7 +37,7 @@ public class TupleMapMatchers {
 	 */
 	public static <T extends Tuple> Matcher<T> each(Iterable<Tuple2<String,Matcher>> matchers,
 											 OutputTable<T> table) {
-		return Each.each(matchers,table);
+		return Each.each(matchers, table);
 	}
 
 }

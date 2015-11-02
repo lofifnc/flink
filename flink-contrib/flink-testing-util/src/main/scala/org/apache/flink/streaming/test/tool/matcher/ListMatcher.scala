@@ -17,6 +17,7 @@
  */
 package org.apache.flink.streaming.test.tool.matcher
 
+import org.hamcrest.{TypeSafeMatcher, Matcher}
 import org.scalatest.exceptions.TestFailedException
 
 /**
@@ -25,6 +26,7 @@ import org.scalatest.exceptions.TestFailedException
  * @tparam T
  */
 abstract class ListMatcher[T] (val right: List[T]) {
+
   /**
    * Checks if the list matches the expectations.
    * @throws TestFailedException if the predicate does not match.

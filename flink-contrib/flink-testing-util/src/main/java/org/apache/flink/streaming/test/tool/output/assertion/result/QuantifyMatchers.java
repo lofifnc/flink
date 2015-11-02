@@ -52,8 +52,7 @@ public class QuantifyMatchers {
 	 * @return {@link Matcher}
 	 */
 	public static <T> Matcher<Iterable<T>> atLeast(Matcher<T> matcher, int n) {
-		//TODO
-		return null;
+		return AtLeast.<T>atLeast(matcher,n);
 	}
 
 	/**
@@ -65,8 +64,7 @@ public class QuantifyMatchers {
 	 * @return {@link Matcher}
 	 */
 	public static <T> Matcher<Iterable<T>> atMost(Matcher<T> matcher, int n) {
-		//TODO
-		return null;
+		return AtMost.<T>atMost(matcher,n);
 	}
 
 	/**
@@ -78,8 +76,7 @@ public class QuantifyMatchers {
 	 * @return {@link Matcher}
 	 */
 	public static <T> Matcher<Iterable<T>> exactly(Matcher<T> matcher, int n) {
-		//TODO
-		return null;
+		return Exactly.<T>exactly(matcher,n);
 	}
 
 	/**
@@ -92,5 +89,7 @@ public class QuantifyMatchers {
 	public static <T> Matcher<Iterable<T>> none(Matcher<T> matcher) {
 		return IsNot.not(any(matcher));
 	}
+
+
 
 }
