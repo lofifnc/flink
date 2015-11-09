@@ -17,20 +17,26 @@
 
 package org.apache.flink.streaming.test.tool.core.input;
 
+import org.apache.commons.collections.ListUtils;
 import org.apache.flink.streaming.test.tool.input.EventTimeInput;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * Builder to define the input for a test
  * Offers multiple methods to generate input with the EventTime attached.
+ *
  * @param <T> value type
  */
 public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 
-	/** List of input containing StreamRecords */
+	/**
+	 * List of input containing StreamRecords
+	 */
 	private ArrayList<StreamRecord<T>> input = new ArrayList<>();
 
 	private EventTimeInputBuilder(StreamRecord<T> record) {
@@ -39,17 +45,18 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 
 	/**
 	 * Adds the first record to the input
+	 *
 	 * @param elem value
-	 * @param timeStamp
 	 * @param <T>
 	 * @return
 	 */
-	public static <T> EventTimeInputBuilder<T> create(T elem, long timeStamp) {
-		return new EventTimeInputBuilder<T>(new StreamRecord<T>(elem,timeStamp));
+	public static <T> EventTimeInputBuilder<T> create(T elem) {
+		return new EventTimeInputBuilder<T>(new StreamRecord<T>(elem, 0));
 	}
 
 	/**
 	 * Adds the first StreamRecord to the input
+	 *
 	 * @param record
 	 * @param <T>
 	 * @return
@@ -59,23 +66,13 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	}
 
 	/**
-	 * Adds the first record to the input using the current time as
-	 * first timestamp
-	 * @param elem
-	 * @param <T>
-	 * @return
-	 */
-	public static <T> EventTimeInputBuilder<T> create(T elem) {
-		return new EventTimeInputBuilder<T>(new StreamRecord<T>(elem, 0));
-	}
-
-	/**
 	 * Add an element with timestamp to the input
+	 *
 	 * @param elem
 	 * @param timeStamp
 	 * @return
 	 */
-	public EventTimeInputBuilder<T> add(T elem, long timeStamp) {
+	public EventTimeInputBuilder<T> emit(T elem, long timeStamp) {
 		input.add(new StreamRecord<T>(elem, timeStamp));
 		return this;
 	}
@@ -83,24 +80,56 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	/**
 	 * Add an element with an {@link After} object,
 	 * defining the time between the previous and the new record.
+	 *
 	 * @param elem
-	 * @param after
+	 * @param timeSpan {@link TimeSpan}
 	 * @return
 	 */
-	public EventTimeInputBuilder<T> add(T elem, After after) {
+	public EventTimeInputBuilder<T> emit(T elem, TimeSpan timeSpan) {
 		long lastTimeStamp = input.get(input.size() - 1).getTimestamp();
-		long currentTimeStamp = lastTimeStamp + after.getTimeSpan();
+		long currentTimeStamp = lastTimeStamp + timeSpan.getTimeSpan();
 		input.add(new StreamRecord<T>(elem, currentTimeStamp));
 		return this;
 	}
 
 	/**
 	 * Add a {@link StreamRecord} to the list of input
+	 *
 	 * @param record
 	 * @return
 	 */
-	public EventTimeInputBuilder<T> add(StreamRecord<T> record) {
+	public EventTimeInputBuilder<T> emit(StreamRecord<T> record) {
 		input.add(record);
+		return this;
+	}
+
+	/**
+	 * Repeats the last element
+	 * @param times    number of times the input ist will be repeated
+	 */
+	public EventTimeInputBuilder<T> repeatablyEmit(T elem,TimeSpan timeBetween, int times) {
+		long ts = input.get(input.size() - 1).getTimestamp();
+		for (int i = 0; i < times; i++) {
+			ts = ts + timeBetween.getTimeSpan();
+			input.add(new StreamRecord<T>(elem,ts));
+		}
+		return this;
+	}
+
+	/**
+	 * Repeat the current input list
+	 *
+	 * @param timeSpan defining the time before and between repeating
+	 * @param times    number of times the input ist will be repeated
+	 */
+	public EventTimeInputBuilder<T> repeatInput(TimeSpan timeSpan, int times) {
+		long start = input.get(input.size() - 1).getTimestamp();
+		List<StreamRecord<T>> toAppend = new ArrayList<>();
+		for (int i = 0; i < times; i++) {
+			toAppend.addAll(repeatInput(timeSpan.getTimeSpan(), start));
+			start = toAppend.get(toAppend.size() - 1).getTimestamp();
+		}
+		input.addAll(toAppend);
 		return this;
 	}
 
@@ -108,18 +137,41 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * Print the input list.
 	 * @return
 	 */
-	public String toString(){
+	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		for(StreamRecord<T> r : input) {
-			builder.append("value: " + r.getValue() + " timestamp: " + r.getTimestamp() +"\n");
+		for (StreamRecord<T> r : input) {
+			builder.append("value: " + r.getValue() + " timestamp: " + r.getTimestamp() + "\n");
 		}
-
 		return builder.toString();
 	}
-
 
 	@Override
 	public List<StreamRecord<T>> getInput() {
 		return input;
+	}
+
+	private List<StreamRecord<T>> repeatInput(long time, long startTimeStamp) {
+
+		List<StreamRecord<T>> append = new ArrayList<>();
+		Iterator<StreamRecord<T>> it = input.iterator();
+		long last = startTimeStamp;
+		long delta = time;
+
+		//first step
+		StreamRecord<T> record = it.next();
+		append.add(new StreamRecord<T>(record.getValue(),
+				last + delta));
+		long previous = record.getTimestamp();
+		last = last + delta;
+
+		while (it.hasNext()) {
+			record = it.next();
+			delta = record.getTimestamp() - previous;
+			append.add(new StreamRecord<T>(record.getValue(),
+					last + delta));
+			last = last + delta;
+			previous = record.getTimestamp();
+		}
+		return append;
 	}
 }

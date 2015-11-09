@@ -6,10 +6,10 @@ import org.hamcrest.Matcher;
 
 /**
  * Provides a {@link Matcher} that is successful if at most n
- * items in the examined {@list Iterable} is a positive match.
+ * items in the examined {@link Iterable} is a positive match.
  * @param <T>
  */
-public class AtMost<T> extends WhileList<T> {
+public class AtMost<T> extends WhileRecord<T> {
 
 	private final int n;
 

@@ -7,11 +7,11 @@ import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
-public abstract class UntilList<T> extends TypeSafeDiagnosingMatcher<Iterable<T>> {
+public abstract class UntilRecord<T> extends TypeSafeDiagnosingMatcher<Iterable<T>> {
 
 	private final Matcher<T> matcher;
 
-	public UntilList(Matcher<T> matcher) {
+	public UntilRecord(Matcher<T> matcher) {
 		this.matcher = matcher;
 	}
 

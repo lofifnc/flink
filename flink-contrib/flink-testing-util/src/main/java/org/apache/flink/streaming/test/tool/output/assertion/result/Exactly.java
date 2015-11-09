@@ -7,11 +7,11 @@ import org.hamcrest.Matcher;
 
 /**
  * Provides a {@link Matcher} that is successful if exactly n
- * items in the examined {@list Iterable} is a positive match.
+ * items in the examined {@link Iterable} is a positive match.
  *
  * @param <T>
  */
-public class Exactly<T> extends WhileList<T> {
+public class Exactly<T> extends WhileRecord<T> {
 
 	private final int n;
 

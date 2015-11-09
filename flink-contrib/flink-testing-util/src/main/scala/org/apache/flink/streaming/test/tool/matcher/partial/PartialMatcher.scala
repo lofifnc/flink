@@ -18,6 +18,7 @@
 package org.apache.flink.streaming.test.tool.matcher.partial
 
 import org.apache.flink.streaming.test.tool.matcher.{ListMatchers, ListMatcher, ListMatcherBuilder}
+import org.hamcrest.Description
 import org.scalatest.exceptions.TestFailedException
 
 import scala.collection.JavaConversions._
@@ -102,9 +103,14 @@ abstract class PartialMatcher[T](constraints: ArrayBuffer[ListMatcher[T]], right
    * Checks if the list matches the expectations.
    * @throws TestFailedException if the predicate does not match
    */
-  override def matches(left: List[T]): Unit = {
-    constraints.foreach {
-      _.matches(left)
-    }
+  override def matchesSafely(left: List[T]): Boolean = {
+    println("ll " + constraints.size)
+    constraints.map { (t) =>
+      t.matchesSafely(left)
+    }.reduce(_ && _)
+  }
+
+  override def describeTo(description: Description): Unit = {
+
   }
 }

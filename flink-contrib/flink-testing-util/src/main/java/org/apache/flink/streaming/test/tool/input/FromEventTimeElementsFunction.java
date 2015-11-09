@@ -17,6 +17,8 @@
 
 package org.apache.flink.streaming.test.tool.input;
 
+import com.google.common.collect.Iterables;
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.InputViewDataInputStreamWrapper;
@@ -25,14 +27,15 @@ import org.apache.flink.streaming.api.checkpoint.CheckpointedAsynchronously;
 import org.apache.flink.streaming.api.functions.source.EventTimeSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
+import org.apache.flink.streaming.test.tool.util.Util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A stream source function that returns a sequence of elements with given TimeStamps.
@@ -65,10 +68,9 @@ public class FromEventTimeElementsFunction<T> implements EventTimeSourceFunction
 	/** Flag to make the source cancelable */
 	private volatile boolean isRunning = true;
 
+	/** List of watermarks to emit */
+	private volatile List<Long> watermarkList;
 
-	public FromEventTimeElementsFunction(TypeSerializer<StreamRecord<T>> serializer, StreamRecord<T>... elements) throws IOException {
-		this(serializer, Arrays.asList(elements));
-	}
 
 	public FromEventTimeElementsFunction(TypeSerializer<StreamRecord<T>> serializer, Iterable<StreamRecord<T>> elements) throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -85,6 +87,13 @@ public class FromEventTimeElementsFunction<T> implements EventTimeSourceFunction
 			throw new IOException("Serializing the source elements failed: " + e.getMessage(), e);
 		}
 
+
+		//calculate watermarks
+		watermarkList = Util.calculateWatermarks(elements);
+		if(watermarkList.size() != Iterables.size(elements)) {
+			throw new IOException("The list of watermarks has not the same length as the output");
+		}
+
 		this.serializer = serializer;
 		this.elementsSerialized = baos.toByteArray();
 		this.numElements = count;
@@ -94,6 +103,7 @@ public class FromEventTimeElementsFunction<T> implements EventTimeSourceFunction
 	public void run(SourceContext<T> ctx) throws Exception {
 		ByteArrayInputStream bais = new ByteArrayInputStream(elementsSerialized);
 		final DataInputView input = new InputViewDataInputStreamWrapper(new DataInputStream(bais));
+		Iterator<Long> watermarks = watermarkList.iterator();
 
 		// if we are restored from a checkpoint and need to skip elements, skip them now.
 		int toSkip = numElementsToSkip;
@@ -101,6 +111,7 @@ public class FromEventTimeElementsFunction<T> implements EventTimeSourceFunction
 			try {
 				while (toSkip > 0) {
 					serializer.deserialize(input);
+					watermarks.next();
 					toSkip--;
 				}
 			}
@@ -127,8 +138,12 @@ public class FromEventTimeElementsFunction<T> implements EventTimeSourceFunction
 			}
 
 			synchronized (lock) {
+				//logic where to put?
 				ctx.collectWithTimestamp(next.getValue(), next.getTimestamp());
-				ctx.emitWatermark(new Watermark(next.getTimestamp() - 1));
+				Long watermark = watermarks.next();
+				if(watermark > 0) {
+					ctx.emitWatermark(new Watermark(watermark));
+				}
 				numElementsEmitted++;
 			}
 		}

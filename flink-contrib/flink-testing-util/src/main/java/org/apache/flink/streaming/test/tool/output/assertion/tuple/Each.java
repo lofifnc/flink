@@ -2,14 +2,24 @@ package org.apache.flink.streaming.test.tool.output.assertion.tuple;
 
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.streaming.test.tool.core.output.map.OutputTable;
+import org.apache.flink.streaming.test.tool.KeyMatcherPair;
+import org.apache.flink.streaming.test.tool.core.output.map.TupleMask;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
-public class Each<T extends Tuple> extends Until<T> {
+/**
+ * Provides a {@link org.hamcrest.Matcher} inspecting a {@link Tuple} and expecting it to
+ * fulfill at each of the specified matchers.
+ */
+public class Each<T extends Tuple> extends UntilTuple<T> {
 
-	public Each(Iterable<Tuple2<String, Matcher>> matchers, OutputTable<T> table) {
-		super(matchers, table);
+	/**
+	 * Default constructor
+	 *
+	 * @param matchers {@link Iterable} of {@link KeyMatcherPair}
+	 */
+	public Each(Iterable<KeyMatcherPair> matchers, TupleMask<T> mask) {
+		super(matchers, mask);
 	}
 
 	@Override
@@ -23,8 +33,8 @@ public class Each<T extends Tuple> extends Until<T> {
 	}
 
 	@Factory
-	public static <T extends Tuple> Each<T> each(Iterable<Tuple2<String, Matcher>> matchers,
-												 OutputTable<T> table) {
-		return new Each<T>(matchers,table);
+	public static <T extends Tuple> Each<T> each(Iterable<KeyMatcherPair> matchers,
+												 TupleMask<T> mask) {
+		return new Each<T>(matchers, mask);
 	}
 }

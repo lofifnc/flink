@@ -18,8 +18,8 @@
 package org.apache.flink.streaming.test.tool.core.output;
 
 import org.apache.flink.streaming.test.tool.core.output.matcher.MatcherBuilder;
-import org.apache.flink.streaming.test.tool.output.ListVerifier;
-import org.apache.flink.streaming.test.tool.output.OutputVerifier;
+import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
+import org.hamcrest.Description;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ import java.util.List;
  * for the input of a {@link org.apache.flink.streaming.test.tool.output.TestSink}
  * @param <T>
  */
-public class ExpectedOutput<T> {
+public class ExpectedOutput<T> extends OutputMatcher<T> {
 
 	/** list of expected records */
 	private List<T> expectedOutput;
@@ -45,9 +45,10 @@ public class ExpectedOutput<T> {
 	 * expectations for the test
 	 * @return builder for refining expectations
 	 */
-	public MatcherBuilder<T> expect() {
-		if (matcher == null)
+	public MatcherBuilder<T> refine() {
+		if (matcher == null) {
 			matcher = new MatcherBuilder<>(expectedOutput);
+		}
 		return matcher;
 	}
 
@@ -56,23 +57,19 @@ public class ExpectedOutput<T> {
 	 * @param elem record to add
 	 * @return
 	 */
-	public ExpectedOutput<T> add(T elem) {
+	public ExpectedOutput<T> expect(T elem) {
 		expectedOutput.add(elem);
 		return this;
 	}
 
-	/**
-	 * Returns a {@link OutputVerifier}
-	 * that is used by the {@link org.apache.flink.streaming.test.tool.output.OutputHandler}
-	 * to test the output.
-	 * @return verifier
-	 */
-	public OutputVerifier<T> getVerifier() {
-		/* if no expectations have been defined you will be provided with the default */
-		if(matcher == null) {
-			expect();
-		}
-		return new ListVerifier<>(matcher);
+	@Override
+	public boolean matches(Object item) {
+		return refine().matches(item);
+	}
+
+	@Override
+	public void describeTo(Description description) {
+		refine().describeTo(description);
 	}
 
 //	public <T> getValidator() {

@@ -17,7 +17,7 @@
  */
 package org.apache.flink.streaming.test.tool.matcher
 
-import org.hamcrest.{TypeSafeMatcher, Matcher}
+import org.hamcrest.{Description, TypeSafeMatcher, Matcher}
 import org.scalatest.exceptions.TestFailedException
 
 /**
@@ -25,13 +25,10 @@ import org.scalatest.exceptions.TestFailedException
  * a certain requirement.
  * @tparam T
  */
-abstract class ListMatcher[T] (val right: List[T]) {
+abstract class ListMatcher[T] (val right: List[T]) extends TypeSafeMatcher[List[T]] {
 
-  /**
-   * Checks if the list matches the expectations.
-   * @throws TestFailedException if the predicate does not match.
-   */
-  @throws (classOf[TestFailedException])
-  def matches(left: List[T])
+  override def matchesSafely(list: List[T]): Boolean
+
+  override def describeTo(description: Description): Unit
 
 }

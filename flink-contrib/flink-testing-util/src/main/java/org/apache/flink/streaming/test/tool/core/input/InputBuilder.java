@@ -33,6 +33,12 @@ public class InputBuilder<T> implements Input<T> {
 	/** List of input */
 	List<T> input = new ArrayList<T>();
 
+	public static <T> InputBuilder create(T elem) {
+		InputBuilder<T> builder =  new InputBuilder<T>();
+		builder.add(elem);
+		return builder;
+	}
+
 	/**
 	 * Adds a new element to the input
 	 * @param elem

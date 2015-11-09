@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Helper for defining a time span between to StreamRecords
  */
-public class After {
+public class After implements TimeSpan {
 	private long timeSpan;
 
 	public static After period(long time, TimeUnit timeUnit){

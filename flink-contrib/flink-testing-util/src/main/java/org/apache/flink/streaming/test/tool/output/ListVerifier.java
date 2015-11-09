@@ -21,21 +21,21 @@ import org.apache.flink.streaming.test.tool.core.output.matcher.MatcherBuilder;
 
 import java.util.List;
 
-/**
- * Uses the matcher provided by {@link MatcherBuilder} to
- * provide a {@link SimpleOutputVerifier}.
- * @param <T>
- */
-public class ListVerifier<T> extends SimpleOutputVerifier<T> {
-
-	private MatcherBuilder<T> matcher;
-
-	public ListVerifier(MatcherBuilder<T> matcher) {
-		this.matcher = matcher;
-	}
-
-	@Override
-	public void verify(List<T> output) {
-		matcher.verify(output);
-	}
-}
+///**
+// * Uses the matcher provided by {@link MatcherBuilder} to
+// * provide a {@link SimpleOutputVerifier}.
+// * @param <T>
+// */
+//public class ListVerifier<T> extends SimpleOutputVerifier<T> {
+//
+//	private MatcherBuilder<T> matcher;
+//
+//	public ListVerifier(MatcherBuilder<T> matcher) {
+//		this.matcher = matcher;
+//	}
+//
+//	@Override
+//	public void verify(List<T> output) {
+//		matcher.verify(output);
+//	}
+//}

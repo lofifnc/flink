@@ -1,5 +1,9 @@
-package org.apache.flink.streaming.test.tool.output.assertion.result;
+package org.apache.flink.streaming.test.tool.output.assertion.tuple;
 
+
+import org.apache.flink.api.java.tuple.Tuple;
+import org.apache.flink.streaming.test.tool.KeyMatcherPair;
+import org.apache.flink.streaming.test.tool.core.output.map.TupleMask;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -7,19 +11,20 @@ import org.hamcrest.Matcher;
 /**
  * Provides a {@link Matcher} that is successful if exactly one
  * item in the examined {@link Iterable} is a positive match.
+ *
  * @param <T>
  */
-public class OneOf<T> extends WhileRecord<T> {
+public class One<T extends Tuple> extends WhileTuple<T> {
 
 	/**
 	 * Default constructor
-	 * @param matcher to apply to the {@link Iterable}
+	 *
+	 * @param matchers {@link Iterable} of {@link KeyMatcherPair}
 	 */
-	public OneOf(Matcher<T> matcher) {
-		super(matcher);
+	public One(Iterable<KeyMatcherPair> matchers, TupleMask<T> mask) {
+		super(matchers, mask);
 	}
 
-	@Override
 	protected Description describeCondition(Description description) {
 		return description.appendText("exactly ").appendValue(1);
 	}
@@ -40,7 +45,8 @@ public class OneOf<T> extends WhileRecord<T> {
 	}
 
 	@Factory
-	public static <T> OneOf<T> one(Matcher<T> matcher) {
-		return new OneOf<T>(matcher);
+	public static <T extends Tuple> One<T> one(Iterable<KeyMatcherPair> matchers,
+											   TupleMask<T> mask) {
+		return new One<T>(matchers, mask);
 	}
 }

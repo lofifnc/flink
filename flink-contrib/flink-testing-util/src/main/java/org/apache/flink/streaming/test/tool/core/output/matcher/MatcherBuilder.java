@@ -17,13 +17,17 @@
 
 package org.apache.flink.streaming.test.tool.core.output.matcher;
 
+import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.TypeSafeMatcher;
+
 import java.util.List;
 
 /**
  * Wrapper for the scala {@link org.apache.flink.streaming.test.tool.matcher.ListMatcherBuilder}
  * @param <T>
  */
-public class MatcherBuilder<T> {
+public class MatcherBuilder<T> extends TypeSafeMatcher<List<T>> {
 
 	private org.apache.flink.streaming.test.tool.matcher.ListMatcherBuilder<T> builder;
 	private List<T> right;
@@ -58,12 +62,14 @@ public class MatcherBuilder<T> {
 		return new OrderMatcher<T>(builder);
 	}
 
-	/**
-	 * Tests whether the list matches the expectations
-	 * @param left actual output
-	 */
-	public void verify(List<T> left) {
-		builder.verify(left);
+	@Override
+	public boolean matchesSafely(List<T> list) {
+		System.out.println("test");
+		return builder.validate(list);
 	}
 
+	@Override
+	public void describeTo(Description description) {
+		builder.describeTo(description);
+	}
 }

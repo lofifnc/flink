@@ -6,10 +6,10 @@ import org.hamcrest.Matcher;
 
 /**
  * Provides a {@link Matcher} that is successful if each of
- * the items in the examined {@list Iterable} is a positive match.
+ * the items in the examined {@link Iterable} is a positive match.
  * @param <T>
  */
-public class EachOf<T> extends UntilList<T> {
+public class EachOf<T> extends UntilRecord<T> {
 
 	/**
 	 * Default Constructor

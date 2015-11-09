@@ -18,6 +18,7 @@
 package org.apache.flink.streaming.test.tool.core;
 
 import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.test.tool.core.output.ExpectedOutput;
 import org.apache.flink.streaming.test.tool.input.EventTimeInput;
@@ -26,6 +27,7 @@ import org.apache.flink.streaming.test.tool.output.OutputHandler;
 import org.apache.flink.streaming.test.tool.output.OutputVerifier;
 import org.apache.flink.streaming.test.tool.output.TestSink;
 import org.apache.flink.streaming.test.tool.output.assertion.HamcrestVerifier;
+import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
 import org.apache.flink.streaming.test.tool.runtime.TestingStreamEnvironment;
 import org.junit.After;
 import org.junit.Before;
@@ -69,7 +71,7 @@ public class StreamTest {
 	 * @param <OUT> type of the emitted records
 	 * @return a DataStreamSource generating the input
 	 */
-	public <OUT> DataStreamSource<OUT> createDataSource(EventTimeInput<OUT> input) {
+	public <OUT> DataStreamSource<OUT> createTestStream(EventTimeInput<OUT> input) {
 		return env.fromInput(input);
 	}
 
@@ -80,7 +82,7 @@ public class StreamTest {
 	 * @param <OUT> type of the emitted records
 	 * @return a DataStream generating the input
 	 */
-	public <OUT> DataStreamSource<OUT> createDataSource(Input<OUT> input) {
+	public <OUT> DataStreamSource<OUT> createTestStream(Input<OUT> input) {
 		return env.fromInput(input);
 	}
 
@@ -105,19 +107,24 @@ public class StreamTest {
 	 * @return the created sink.
 	 */
 	public <IN> TestSink<IN> createTestSink(org.hamcrest.Matcher<Iterable<IN>> matcher) {
+		System.out.println("hamcrest");
 		OutputVerifier<IN> verifier = new HamcrestVerifier<>(matcher);
 		return createTestSink(verifier);
 	}
 
-	/**
-	 * Creates a TestSink to verify your job output.
-	 *
-	 * @param expectedOutput which will be used to verify the received records
-	 * @param <IN>           type of the input
-	 * @return the created sink.
-	 */
-	public <IN> TestSink<IN> createTestSink(ExpectedOutput<IN> expectedOutput) {
-		return createTestSink(expectedOutput.getVerifier());
+//	/**
+//	 * Creates a TestSink to verify your job output.
+//	 *
+//	 * @param expectedOutput which will be used to verify the received records
+//	 * @param <IN>           type of the input
+//	 * @return the created sink.
+//	 */
+//	public <IN> TestSink<IN> createTestSink(ExpectedOutput<IN> expectedOutput) {
+//		return createTestSink(expectedOutput.getVerifier());
+//	}
+
+	public <T> void matchStream(DataStream<T> stream, OutputMatcher<T> matcher) {
+		stream.addSink(createTestSink(matcher));
 	}
 
 	/**

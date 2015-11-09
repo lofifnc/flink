@@ -6,11 +6,11 @@ import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
-public abstract class WhileList<T> extends TypeSafeDiagnosingMatcher<Iterable<T>> {
+public abstract class WhileRecord<T> extends TypeSafeDiagnosingMatcher<Iterable<T>> {
 
 	private final Matcher<T> matcher;
 
-	public WhileList(Matcher<T> matcher) {
+	public WhileRecord(Matcher<T> matcher) {
 		this.matcher = matcher;
 	}
 

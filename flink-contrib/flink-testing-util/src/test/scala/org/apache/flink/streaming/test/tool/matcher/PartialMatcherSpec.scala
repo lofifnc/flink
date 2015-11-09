@@ -21,6 +21,7 @@ package org.apache.flink.streaming.test.tool.matcher
 import org.apache.flink.streaming.test.tool.CoreSpec
 import org.apache.flink.streaming.test.tool.matcher.partial.PartialMatcher
 import org.mockito.Mockito._
+import org.mockito.Matchers.any
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -31,6 +32,7 @@ class PartialMatcherSpec extends CoreSpec {
    */
   trait PartialMatcherCase {
     val listMatcher = mock[ListMatcher[Int]]
+    when(listMatcher.matchesSafely(List())).thenReturn(true)
     var selectedList: List[Int] = _
     //the list that gets produced by the partial matcher
     val right = List(1, 2, 3, 4, 5, 6)
@@ -84,29 +86,32 @@ class PartialMatcherSpec extends CoreSpec {
 
   it should "test only once for one requirement" in new PartialMatcherCase {
     matcher.from(2).to(5)
-    matcher.matches(List())
-    verify(listMatcher).matches(List())
+    matcher.matchesSafely(List())
+
+    verify(listMatcher).matchesSafely(List())
   }
 
   it should "test only two times for two requirements" in new PartialMatcherCase {
     matcher.from(2).to(5)
     matcher.all()
-    matcher.matches(List())
-    verify(listMatcher, times(2)).matches(List())
+    matcher.matchesSafely(List())
+    verify(listMatcher, times(2)).matchesSafely(List())
   }
 
   it should "test only two times for two requirements (permutation)" in new PartialMatcherCase {
     matcher.all()
     matcher.from(2).to(5)
-    matcher.matches(List())
-    verify(listMatcher, times(2)).matches(List())
+    matcher.matchesSafely(List())
+    verify(listMatcher, times(2)).matchesSafely(List())
   }
 
   it should "test only two times for two requirements (alternation)" in new PartialMatcherCase {
+
     matcher.from(1).to(3)
     matcher.from(2).to(5)
-    matcher.matches(List())
-    verify(listMatcher, times(2)).matches(List())
+    matcher.matchesSafely(List())
+
+    verify(listMatcher, times(2)).matchesSafely(List())
   }
 
 

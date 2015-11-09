@@ -2,9 +2,8 @@ package org.apache.flink.streaming.test.tool.output.assertion.tuple;
 
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.streaming.test.tool.core.output.map.OutputTable;
-import org.apache.flink.streaming.test.tool.output.assertion.tuple.Any;
-import org.apache.flink.streaming.test.tool.output.assertion.tuple.Each;
+import org.apache.flink.streaming.test.tool.KeyMatcherPair;
+import org.apache.flink.streaming.test.tool.core.output.map.TupleMask;
 import org.hamcrest.Matcher;
 
 /**
@@ -17,27 +16,91 @@ public class TupleMapMatchers {
 	/**
 	 * Creates a {@link Matcher} inspecting a {@link Tuple} and expecting it to
 	 * fulfill at least one of the specified matchers.
+	 *
 	 * @param matchers key matcher pairs
-	 * @param table used for mapping the keys
+	 * @param mask     used for mapping the keys
 	 * @param <T>
 	 * @return
 	 */
-	public static <T extends Tuple> Matcher<T> any(Iterable<Tuple2<String,Matcher>> matchers,
-																OutputTable<T> table) {
-		return Any.any(matchers, table);
+	public static <T extends Tuple> Matcher<T> any(Iterable<KeyMatcherPair> matchers,
+												   TupleMask<T> mask) {
+		return Any.any(matchers, mask);
 	}
 
 	/**
 	 * Creates a {@link Matcher} inspecting a {@link Tuple} and expecting it to
 	 * fulfill all of the specified matchers.
+	 *
 	 * @param matchers key matcher pairs
-	 * @param table used for mapping the keys
+	 * @param mask     used for mapping the keys
 	 * @param <T>
 	 * @return
 	 */
-	public static <T extends Tuple> Matcher<T> each(Iterable<Tuple2<String,Matcher>> matchers,
-											 OutputTable<T> table) {
-		return Each.each(matchers, table);
+	public static <T extends Tuple> Matcher<T> each(Iterable<KeyMatcherPair> matchers,
+													TupleMask<T> mask) {
+		return Each.each(matchers, mask);
+	}
+
+	/**
+	 * Creates a {@link Matcher} inspecting a {@link Tuple} and expecting it to
+	 * fulfill exactly one of the specified matchers.
+	 *
+	 * @param matchers key matcher pairs
+	 * @param mask     used for mapping the keys
+	 * @param <T>
+	 * @return
+	 */
+	public static <T extends Tuple> Matcher<T> one(Iterable<KeyMatcherPair> matchers,
+												   TupleMask<T> mask) {
+		return One.one(matchers, mask);
+	}
+
+	/**
+	 * Creates a {@link Matcher} inspecting a {@link Tuple} and expecting it to
+	 * fulfill an exact number of the specified matchers.
+	 *
+	 * @param matchers key matcher pairs
+	 * @param mask     used for mapping the keys
+	 * @param n        number of matches
+	 * @param <T>
+	 * @return
+	 */
+	public static <T extends Tuple> Matcher<T> exactly(Iterable<KeyMatcherPair> matchers,
+													   TupleMask<T> mask,
+													   int n) {
+		return Exactly.exactly(matchers, mask, n);
+	}
+
+	/**
+	 * Creates a {@link Matcher} inspecting a {@link Tuple} and expecting it to
+	 * fulfill at least a number of the specified matchers.
+	 *
+	 * @param matchers key matcher pairs
+	 * @param mask     used for mapping the keys
+	 * @param n        number of matches
+	 * @param <T>
+	 * @return
+	 */
+	public static <T extends Tuple> Matcher<T> atLeast(Iterable<KeyMatcherPair> matchers,
+													   TupleMask<T> mask,
+													   int n) {
+		return AtLeast.atLeast(matchers, mask, n);
+	}
+
+	/**
+	 * Creates a {@link Matcher} inspecting a {@link Tuple} and expecting it to
+	 * fulfill at most a number of the specified matchers.
+	 *
+	 * @param matchers key matcher pairs
+	 * @param mask     used for mapping the keys
+	 * @param n        number of matches
+	 * @param <T>
+	 * @return
+	 */
+	public static <T extends Tuple> Matcher<T> atMost(Iterable<KeyMatcherPair> matchers,
+													  TupleMask<T> mask,
+													  int n) {
+		return AtMost.atMost(matchers, mask, n);
 	}
 
 }

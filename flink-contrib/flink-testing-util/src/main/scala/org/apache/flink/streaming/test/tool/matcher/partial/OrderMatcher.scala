@@ -18,6 +18,7 @@
 package org.apache.flink.streaming.test.tool.matcher.partial
 
 import org.apache.flink.streaming.test.tool.matcher.{ListMatchers, ListMatcher, ListMatcherBuilder}
+import org.hamcrest.Description
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -48,4 +49,5 @@ class OrderMatcher[T](val constraints: ArrayBuffer[ListMatcher[T]],
   override def getConcreteMatcher(right: List[T]): ListMatcher[T] = {
     ListMatchers.containsInOrder(right)
   }
+
 }

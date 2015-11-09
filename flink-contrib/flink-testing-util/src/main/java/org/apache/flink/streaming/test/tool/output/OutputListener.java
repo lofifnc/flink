@@ -60,9 +60,9 @@ public class OutputListener<OUT> implements Callable<ArrayList<OUT>> {
 			out = subscriber.recv();
 		}
 		// close the connection
-		verifier.finish();
 		subscriber.close();
 		context.close();
+		verifier.finish();
 		ArrayList<OUT> sinkInput = new ArrayList<>();
 		// deserialize messages received from sink
 		for (byte[] b : byteArray) {

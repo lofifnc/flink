@@ -6,10 +6,10 @@ import org.hamcrest.Matcher;
 
 /**
  * Provides a {@link Matcher}s that is successful if at least n
- * items in the examined {@list Iterable} is a positive match.
+ * items in the examined {@link Iterable} is a positive match.
  * @param <T>
  */
-public class AtLeast<T> extends UntilList<T> {
+public class AtLeast<T> extends UntilRecord<T> {
 
 	private final int n;
 

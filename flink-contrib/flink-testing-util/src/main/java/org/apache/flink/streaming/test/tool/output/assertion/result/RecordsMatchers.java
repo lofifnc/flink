@@ -8,11 +8,11 @@ import org.hamcrest.core.IsNot;
  * {@link Matcher}s that takes an {@link Iterable}
  * and excepts a certain number of positive matches.
  */
-public class QuantifyMatchers {
+public class RecordsMatchers {
 
 	/**
 	 * Creates a {@link Matcher} that is successful if at least one
-	 * item in the examined {@list Iterable} is a positive match.
+	 * item in the examined {@link Iterable} is a positive match.
 	 * @param matcher to apply to the list
 	 * @param <T>
 	 * @return {@link Matcher}
@@ -23,7 +23,7 @@ public class QuantifyMatchers {
 
 	/**
 	 * Creates a {@link Matcher} that is successful if each
-	 * item in the examined {@list Iterable} is a positive match.
+	 * item in the examined {@link Iterable} is a positive match.
 	 * @param matcher to apply to the list
 	 * @param <T>
 	 * @return {@link Matcher}
@@ -34,7 +34,7 @@ public class QuantifyMatchers {
 
 	/**
 	 * Creates a {@link Matcher} that is successful if exactly one
-	 * item in the examined {@list Iterable} is a positive match.
+	 * item in the examined {@link Iterable} is a positive match.
 	 * @param matcher to apply to the list
 	 * @param <T>
 	 * @return {@link Matcher}
@@ -45,7 +45,7 @@ public class QuantifyMatchers {
 
 	/**
 	 * Creates a {@link Matcher} that is successful if at least a number of
-	 * items in the examined {@list Iterable} is a positive  match.
+	 * items in the examined {@link Iterable} is a positive  match.
 	 * @param matcher to apply to the list
 	 * @param n number of positive matches
 	 * @param <T>
@@ -57,7 +57,7 @@ public class QuantifyMatchers {
 
 	/**
 	 * Creates a {@link Matcher} that is successful if at most a number of
-	 * items in the examined {@list Iterable} is a positive match.
+	 * items in the examined {@link Iterable} is a positive match.
 	 * @param matcher to apply to the list
 	 * @param n number of positive matches
 	 * @param <T>
@@ -69,7 +69,7 @@ public class QuantifyMatchers {
 
 	/**
 	 * Creates a {@link Matcher} that is successful if an exact number of
-	 * items in the examined {@list Iterable} is a positive match.
+	 * items in the examined {@link Iterable} is a positive match.
 	 * @param matcher to apply to the list
 	 * @param n number of positive matches
 	 * @param <T>
@@ -81,7 +81,7 @@ public class QuantifyMatchers {
 
 	/**
 	 * Creates a {@link Matcher} that is successful if an exact number of
-	 * items in the examined {@list Iterable} is a positive match.
+	 * items in the examined {@link Iterable} is a positive match.
 	 * @param matcher to apply to the list
 	 * @param <T>
 	 * @return {@link Matcher}

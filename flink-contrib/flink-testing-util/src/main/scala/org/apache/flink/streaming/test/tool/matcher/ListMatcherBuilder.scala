@@ -17,7 +17,10 @@
  */
 package org.apache.flink.streaming.test.tool.matcher
 
+import java.util
+
 import org.apache.flink.streaming.test.tool.matcher.partial.OrderMatcher
+import org.hamcrest.{StringDescription, Matcher, Description, TypeSafeDiagnosingMatcher}
 import org.scalatest.exceptions.TestFailedException
 
 import scala.collection.JavaConversions._
@@ -29,10 +32,12 @@ import scala.collection.mutable.ArrayBuffer
  * use to check the output.
  * @tparam T
  */
-class ListMatcherBuilder[T](right: List[T]) extends ListMatcher[T](right){
+class ListMatcherBuilder[T](val right: List[T]) extends TypeSafeDiagnosingMatcher[List[T]] {
 
   /** List of [[ListMatcher]]s to define expectations  */
   private val constraints: ArrayBuffer[ListMatcher[T]] = new ArrayBuffer[ListMatcher[T]]()
+
+  private var onlySelected = false
 
   def this(jList: java.util.List[T]) {
     this(jList.toList)
@@ -42,16 +47,17 @@ class ListMatcherBuilder[T](right: List[T]) extends ListMatcher[T](right){
     END OF CONSTRUCTOR
    */
 
-//  def all() : MatcherBuilder[T] = {
-//    constraints += ListMatchers.containsAll[T](right)
-//    this
-//  }
+  //  def all() : MatcherBuilder[T] = {
+  //    constraints += ListMatchers.containsAll[T](right)
+  //    this
+  //  }
 
   /**
    * Tests whether the output contains only the expected records.
    */
   def only() = {
     constraints += ListMatchers.containsOnly[T](right)
+    onlySelected = true
     this
   }
 
@@ -68,24 +74,20 @@ class ListMatcherBuilder[T](right: List[T]) extends ListMatcher[T](right){
    * Provides a matcher to verify the order of 
    * elements in the output.
    */
-  def inOrder() : OrderMatcher[T] = {
-    new OrderMatcher[T](constraints,right)
-  }
-
-  /**
-   * Tests whether the list matches the expectations.
-   * @param output actual output.
-   */
-  def verify(output: java.util.List[T]): Unit = {
-    matches(output.toList)
+  def inOrder(): OrderMatcher[T] = {
+    new OrderMatcher[T](constraints, right)
   }
 
   /**
    * Getter for the list of contraints.
    * @return array of [[ListMatcher]]
    */
-  def getConstraints : ArrayBuffer[ListMatcher[T]] = {
+  def getConstraints: ArrayBuffer[ListMatcher[T]] = {
     constraints
+  }
+
+  def validate(list: java.util.List[T]): Boolean = {
+    matches(list.toList)
   }
 
   /**
@@ -93,13 +95,28 @@ class ListMatcherBuilder[T](right: List[T]) extends ListMatcher[T](right){
    * @param left actual output.
    * @throws TestFailedException if the predicate does not match.
    */
-  override def matches(left: scala.List[T]): Unit = {
-    if (constraints.nonEmpty) {
-      constraints
-        .foreach(_.matches(left))
-    }else{
-      ListMatchers.containsAll[T](right).matches(left)
+  override def matchesSafely(left: scala.List[T], mismatch: Description): Boolean = {
+    if (constraints.isEmpty || !onlySelected) {
+      constraints += ListMatchers.containsAll[T](right)
     }
+
+    constraints.foreach{ m =>
+      if(!m.matches(left)) {
+        m.describeMismatch(left,mismatch)
+        return false
+      }
+    }
+    true
+  }
+
+  override def describeTo(description: Description): Unit = {
+    description.appendText("output ")
+    constraints.foreach { m =>
+      println("m " + m.describeTo(new StringDescription()))
+      description.appendDescriptionOf(m)
+      description.appendText(" ")
+    }
+    description.appendText(") ")
   }
 }
 

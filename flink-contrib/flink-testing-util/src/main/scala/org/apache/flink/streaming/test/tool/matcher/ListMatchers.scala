@@ -17,15 +17,14 @@
  */
 package org.apache.flink.streaming.test.tool.matcher
 
+import org.hamcrest.Description
 import org.scalatest.Matchers
-
-import scala.collection.immutable.HashMap
-
+import org.scalatest.enablers.{Aggregating, Sequencing}
 
 /**
  * Wrapper around the [[Matchers]] library from ScalaTest.
  * @see http://scalatest.org/
- * Offers several methods to create different [[ListMatcher]]s working on lists.
+ *      Offers several methods to create different [[ListMatcher]]s working on lists.
  */
 object ListMatchers extends Matchers {
 
@@ -37,13 +36,16 @@ object ListMatchers extends Matchers {
    * @tparam T type to match
    * @return concrete [[ListMatcher]]
    */
-  def containsOnly[T](right: List[T]): ListMatcher[T] = {
+  def containsOnly[T](right: List[T])(implicit aggregating: Aggregating[List[T]]): ListMatcher[T] = {
     new ListMatcher[T](right) {
-      override def matches(left: List[T]) =
-        left should contain only (right: _*)
+      override def matchesSafely(left: List[T]): Boolean =
+        aggregating.containsOnly(left, right)
 
-      override def toString : String = {
-        "only matcher"
+      override def toString: String = "only matcher"
+
+      override def describeTo(description: Description): Unit = {
+        description.appendText("contains only ")
+        describeOutput(right, description)
       }
     }
   }
@@ -55,16 +57,18 @@ object ListMatchers extends Matchers {
    * @tparam T type to match
    * @return concrete [[ListMatcher]]
    */
-  def containsAll[T](right: List[T]): ListMatcher[T] = {
+  def containsAll[T](right: List[T])(implicit aggregating: Aggregating[List[T]]): ListMatcher[T] = {
     new ListMatcher[T](right) {
-      override def matches(left: List[T]) = {
-        val (first, second, rest) = splitTo(right)
-        left should contain allOf(first, second, rest: _*)
+      override def matchesSafely(left: List[T]): Boolean =
+        aggregating.containsAllOf(left, right)
+
+      override def toString: String = "all matcher"
+
+      override def describeTo(description: Description): Unit = {
+        description.appendText("contains all ")
+        describeOutput(right, description)
       }
 
-      override def toString : String = {
-        "all matcher"
-      }
     }
   }
 
@@ -77,15 +81,16 @@ object ListMatchers extends Matchers {
    * @tparam T type to match
    * @return concrete [[ListMatcher]]
    */
-  def containsInOrder[T](right: List[T]): ListMatcher[T] = {
+  def containsInOrder[T](right: List[T])(implicit sequencing: Sequencing[List[T]]): ListMatcher[T] = {
     new ListMatcher[T](right) {
-      override def matches(left: List[T]) = {
-        val (first, second, rest) = splitTo(right)
-        left should contain inOrder(first, second, rest: _*)
-      }
+      override def matchesSafely(left: List[T]): Boolean =
+        sequencing.containsInOrder(left, right)
 
-      override def toString : String = {
-        "order matcher"
+      override def toString: String = "order matcher"
+
+      override def describeTo(description: Description): Unit = {
+        description.appendText("in order ")
+        describeOutput(right, description)
       }
     }
   }
@@ -100,15 +105,15 @@ object ListMatchers extends Matchers {
    */
   def containsInSeries[T](right: List[T]): ListMatcher[T] = {
     new ListMatcher[T](right) {
-      override def matches(left: List[T]) = {
+      override def matchesSafely(left: List[T]): Boolean =
+        left.containsSlice(right)
 
-        if(!left.containsSlice(right)) {
-          fail(s"output did not contain sequence $right")
-        }
-      }
-
-      override def toString : String = {
+      override def toString: String =
         "series matcher"
+
+      override def describeTo(description: Description): Unit = {
+        description.appendText("in series ")
+        describeOutput(right, description)
       }
     }
   }
@@ -124,7 +129,7 @@ object ListMatchers extends Matchers {
    */
   def containsNoDuplicates[T](right: List[T]): ListMatcher[T] = {
     new ListMatcher[T](right) {
-      override def matches(left: List[T]) = {
+      override def matchesSafely(left: List[T]): Boolean = {
 
         val countDuplicates = (l: List[T]) => l
           .groupBy(identity)
@@ -133,19 +138,35 @@ object ListMatchers extends Matchers {
         val leftDuplicates = countDuplicates(left)
         val rightDuplicates = countDuplicates(right)
 
-        rightDuplicates.foreach{
+        rightDuplicates.foreach {
           case (elem, count) =>
-            if(leftDuplicates(elem) > count) {
-              fail(s" $elem should only be $count times in output")
+            if(leftDuplicates.contains(elem)) {
+              println(elem, leftDuplicates(elem), count)
+              if (leftDuplicates(elem) > count) {
+                return false
+              }
             }
         }
-
+        true
       }
 
-      override def toString : String = {
+      override def toString: String = {
         "duplicate matcher"
       }
+
+      override def describeTo(description: Description): Unit = {
+        description.appendText("no duplicates ")
+        describeOutput(right, description)
+      }
     }
+  }
+
+  private def describeOutput[T](list: Seq[T], description: Description) = {
+    val builder = StringBuilder.newBuilder
+    builder.append("<[")
+    builder.append(list.mkString(", "))
+    builder.append("]>")
+    description.appendText(builder.toString())
   }
 
   /**
