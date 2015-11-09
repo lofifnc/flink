@@ -17,8 +17,12 @@
 
 package org.apache.flink.streaming.test.tool.input;
 
+import com.google.common.collect.Iterables;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
+import org.apache.flink.util.SplittableIterator;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -26,6 +30,22 @@ import java.util.List;
  * timestamped input for tests.
  * @param <T>
  */
-public interface EventTimeInput<T> {
-	List<StreamRecord<T>> getInput();
+public abstract class EventTimeInput<T> {
+
+	public abstract List<StreamRecord<T>> getInput();
+
+	public Iterable<StreamRecord<T>> getSplit(int num, int numPartitions) {
+		List<StreamRecord<T>> split = new ArrayList<>();
+		List<StreamRecord<T>> input = getInput();
+		int i = num - 1;
+		while(i < input.size()) {
+			split.add(input.get(i));
+			i += numPartitions;
+		}
+		return split;
+	}
+
+	public int getMaximumNumberOfSplits() {
+		return getInput().size();
+	}
 }

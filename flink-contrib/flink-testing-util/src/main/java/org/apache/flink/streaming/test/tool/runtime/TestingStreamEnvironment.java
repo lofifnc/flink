@@ -27,7 +27,7 @@ import org.apache.flink.streaming.api.functions.source.FromElementsFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.test.tool.input.EventTimeInput;
-import org.apache.flink.streaming.test.tool.input.FromEventTimeElementsFunction;
+import org.apache.flink.streaming.test.tool.input.FromStreamRecordsFunction;
 import org.apache.flink.streaming.test.tool.input.Input;
 import org.apache.flink.streaming.util.TestStreamEnvironment;
 import org.apache.flink.test.util.ForkableFlinkMiniCluster;
@@ -76,6 +76,7 @@ public class TestingStreamEnvironment extends TestStreamEnvironment {
 		if (data.length == 0) {
 			throw new IllegalArgumentException("fromElements needs at least one element as argument");
 		}
+
 
 		TypeInformation<OUT> typeInfo;
 		try {
@@ -163,7 +164,7 @@ public class TestingStreamEnvironment extends TestStreamEnvironment {
 
 		SourceFunction<OUT> function;
 		try {
-			function = new FromEventTimeElementsFunction<OUT>(typeInfo.createSerializer(getConfig()), data);
+			function = new FromStreamRecordsFunction<OUT>(typeInfo.createSerializer(getConfig()), data);
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}

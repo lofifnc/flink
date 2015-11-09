@@ -27,6 +27,7 @@ import org.apache.flink.streaming.api.checkpoint.CheckpointedAsynchronously;
 import org.apache.flink.streaming.api.functions.source.EventTimeSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
+import org.apache.flink.streaming.test.tool.util.SerializeUtil;
 import org.apache.flink.streaming.test.tool.util.Util;
 
 import java.io.ByteArrayInputStream;
@@ -46,7 +47,7 @@ import java.util.List;
  *
  * @param <T> The type of elements returned by this function.
  */
-public class FromEventTimeElementsFunction<T> implements EventTimeSourceFunction<T>, CheckpointedAsynchronously<Integer> {
+public class FromStreamRecordsFunction<T> implements EventTimeSourceFunction<T>, CheckpointedAsynchronously<Integer> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -69,24 +70,12 @@ public class FromEventTimeElementsFunction<T> implements EventTimeSourceFunction
 	private volatile boolean isRunning = true;
 
 	/** List of watermarks to emit */
-	private volatile List<Long> watermarkList;
+	private final List<Long> watermarkList;
 
 
-	public FromEventTimeElementsFunction(TypeSerializer<StreamRecord<T>> serializer, Iterable<StreamRecord<T>> elements) throws IOException {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		OutputViewDataOutputStreamWrapper wrapper = new OutputViewDataOutputStreamWrapper(new DataOutputStream(baos));
+	public FromStreamRecordsFunction(TypeSerializer<StreamRecord<T>> serializer, Iterable<StreamRecord<T>> elements) throws IOException {
 
-		int count = 0;
-		try {
-			for (StreamRecord<T> element : elements) {
-				serializer.serialize(element, wrapper);
-				count++;
-			}
-		}
-		catch (Exception e) {
-			throw new IOException("Serializing the source elements failed: " + e.getMessage(), e);
-		}
-
+		ByteArrayOutputStream baos =SerializeUtil.serializeOutput(elements,serializer);
 
 		//calculate watermarks
 		watermarkList = Util.calculateWatermarks(elements);
@@ -96,7 +85,7 @@ public class FromEventTimeElementsFunction<T> implements EventTimeSourceFunction
 
 		this.serializer = serializer;
 		this.elementsSerialized = baos.toByteArray();
-		this.numElements = count;
+		this.numElements = Iterables.size(elements);
 	}
 
 	@Override

@@ -17,6 +17,7 @@
 
 package org.apache.flink.streaming.test.tool.output;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.streaming.test.tool.util.SerializeUtil;
 import org.scalatest.exceptions.TestFailedException;
@@ -54,6 +55,7 @@ public class OutputListener<OUT> implements Callable<ArrayList<OUT>> {
 		verifier.init();
 		// receive .output from sink until END message;
 		byte[] out = subscriber.recv();
+
 		while (!Arrays.equals(out, "END".getBytes())) {
 			byteArray.add(out);
 			verifier.receive(SerializeUtil.deserialize(out,typeSerializer));

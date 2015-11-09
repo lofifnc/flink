@@ -17,7 +17,11 @@
 
 package org.apache.flink.streaming.test.tool.runtime.messaging;
 
+import java.security.InvalidParameterException;
+import java.util.Arrays;
 import java.util.Random;
+
+import org.apache.commons.lang.ArrayUtils;
 import org.zeromq.ZMQ;
 
 //
@@ -27,7 +31,43 @@ import org.zeromq.ZMQ;
 //
 public class wuserver {
 
-	public static void main (String[] args) throws Exception {
+	enum MessageType {
+		START("START".getBytes()),
+		END("END".getBytes()),
+		ELEM("ELEM".getBytes()),
+		SER("SER".getBytes());
+
+		private final byte[] bytes;
+		private final int lenght;
+
+		MessageType(byte[] bytes) {
+			this.bytes = bytes;
+			this.lenght = bytes.length;
+		}
+
+		private byte[] getBytes() {
+			return getBytes();
+		}
+
+		public static MessageType getMessageType(byte[] message) {
+			for(MessageType type : MessageType.values()) {
+				if(isType(message,type)) {
+					return type;
+				}
+			}
+			throw new UnsupportedOperationException("could not find type for message");
+		}
+
+
+		public static Boolean isType(byte[] message, MessageType type) {
+			byte[] subArray = Arrays.copyOfRange(message,0,type.lenght);
+			return ArrayUtils.isEquals(subArray,type.bytes);
+		}
+
+	}
+
+
+	public static void main(String[] args) throws Exception {
 		//  Prepare our context and publisher
 		ZMQ.Context context = ZMQ.context(1);
 
@@ -37,19 +77,35 @@ public class wuserver {
 
 		//  Initialize random number generator
 		Random srandom = new Random(System.currentTimeMillis());
-		while (!Thread.currentThread ().isInterrupted ()) {
-//			//  Get values that will fool the boss
+//		while (!Thread.currentThread ().isInterrupted ()) {
+		//  Get values that will fool the boss
 //			int zipcode, temperature, relhumidity;
 //			zipcode = 10000 + srandom.nextInt(10000) ;
 //			temperature = srandom.nextInt(215) - 80 + 1;
 //			relhumidity = srandom.nextInt(50) + 10 + 1;
 //
 //			//  Send message to all subscribers
+
+		String startmsg = String.format("START %d %d", 1, 2);
+
+		
+
+		System.out.println(MessageType.getMessageType(startmsg.getBytes()).name());
+		System.out.println(ArrayUtils.toString(startmsg.getBytes()));
+		//switch()
+
+
+		System.out.println(String.format("START %d %d", 1, 2));
+
 //			String update = String.format("%05d %d %d", zipcode, temperature, relhumidity);
+		for (int i = 0; i < 10000; i++) {
 			publisher.send("test", 0);
 		}
 
-		publisher.close ();
-		context.term ();
+//		}
+
+		publisher.close();
+		context.term();
+		System.out.println("server stop");
 	}
 }

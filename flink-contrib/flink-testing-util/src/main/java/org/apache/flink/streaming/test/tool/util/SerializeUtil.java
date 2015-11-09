@@ -21,6 +21,8 @@ import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.InputViewDataInputStreamWrapper;
 import org.apache.flink.core.memory.OutputViewDataOutputStreamWrapper;
+import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -127,4 +129,21 @@ public class SerializeUtil {
 			}
 		}
 	}
+
+	public static <T> ByteArrayOutputStream serializeOutput(Iterable<StreamRecord<T>> elements,
+															TypeSerializer<StreamRecord<T>> serializer) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		OutputViewDataOutputStreamWrapper wrapper = new OutputViewDataOutputStreamWrapper(new DataOutputStream(baos));
+
+		try {
+			for (StreamRecord<T> element : elements) {
+				serializer.serialize(element, wrapper);
+			}
+		}
+		catch (Exception e) {
+			throw new IOException("Serializing the source elements failed: " + e.getMessage(), e);
+		}
+		return baos;
+	}
+
 }

@@ -55,6 +55,7 @@ public class Test extends StreamTest {
 
 		TupleMask<Tuple2<Integer,String>> mask = TupleMask.create("value","name");
 
+
 		//------- input definition
 		DataStream<Tuple2<Integer, String>> testStream = createTestStream(
 				fromInput(Tuple2.of(1, "test"))
@@ -69,6 +70,7 @@ public class Test extends StreamTest {
 						.assertThat("value", is(3))
 						.assertThat("name", either(is("test")).or(is("bar")))
 						.anyOfThem().onEachRecord();
+
 
 		matchStream(window(testStream), matcher);
 	}

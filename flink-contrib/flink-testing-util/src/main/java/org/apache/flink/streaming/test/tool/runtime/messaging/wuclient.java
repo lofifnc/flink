@@ -19,6 +19,8 @@ package org.apache.flink.streaming.test.tool.runtime.messaging;
 
 import org.zeromq.ZMQ;
 
+import java.util.StringTokenizer;
+
 //
 //  Weather update client in Java
 //  Connects SUB socket to tcp://localhost:5556
@@ -59,6 +61,7 @@ public class wuclient {
 
 		subscriber.close();
 		context.term();
+		System.out.println("finished");
 	}
 }
 

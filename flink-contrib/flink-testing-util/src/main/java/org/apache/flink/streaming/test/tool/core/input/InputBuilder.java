@@ -17,7 +17,7 @@
 
 package org.apache.flink.streaming.test.tool.core.input;
 
-import org.apache.flink.streaming.test.tool.input.FromEventTimeElementsFunction;
+import org.apache.flink.streaming.test.tool.input.FromStreamRecordsFunction;
 import org.apache.flink.streaming.test.tool.input.Input;
 
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Builder to define Input for a {@link FromEventTimeElementsFunction}
+ * Builder to define Input for a {@link FromStreamRecordsFunction}
  * @param <T> data type
  */
 public class InputBuilder<T> implements Input<T> {

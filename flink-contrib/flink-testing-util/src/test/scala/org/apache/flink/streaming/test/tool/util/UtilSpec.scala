@@ -29,8 +29,6 @@ class UtilSpec extends CoreSpec {
     list.add(new StreamRecord[Integer](1,2))
     val result = Util.calculateWatermarks(list)
     result should contain only(2)
-
-
   }
 
 }

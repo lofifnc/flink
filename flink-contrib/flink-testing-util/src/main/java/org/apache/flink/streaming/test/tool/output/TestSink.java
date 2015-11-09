@@ -34,6 +34,7 @@ import java.io.IOException;
  * Provides a sink that sends all incoming records using a zeroMQ connection.
  * Starts sending data as soon as the first record is received.
  * Signals the end of data when the sink is closed.
+ *
  * @param <IN> record type
  */
 public class TestSink<IN> extends RichSinkFunction<IN> {
@@ -61,10 +62,15 @@ public class TestSink<IN> extends RichSinkFunction<IN> {
 	/**
 	 * Called when new data arrives at the sink.
 	 * Forwards the records via the zeroMQ publisher.
+	 *
 	 * @param next incoming records
 	 */
 	@Override
 	public void invoke(IN next) {
+
+		int numberOfSubTasks = getRuntimeContext().getNumberOfParallelSubtasks();
+		int indexofThisSubTask = getRuntimeContext().getIndexOfThisSubtask();
+
 		if (serializer == null) {
 			/*
 			create serializer
@@ -77,11 +83,17 @@ public class TestSink<IN> extends RichSinkFunction<IN> {
 			try {
 				publisher.send(SerializeUtil.serialize(serializer));
 			} catch (IOException e) {
-				LOG.error("Could not serialize TypeSerializer",e);
+				LOG.error("Could not serialize TypeSerializer", e);
 				return;
 			}
 		}
 		System.out.println("out " + next);
+		/*
+		transmit parallelism
+		 */
+		publisher.send(String.format("START %d %d",
+				indexofThisSubTask,
+				numberOfSubTasks), 0);
 		/*
 		serialize output and send
 		 */
@@ -89,20 +101,20 @@ public class TestSink<IN> extends RichSinkFunction<IN> {
 		try {
 			bytes = SerializeUtil.serialize(next, serializer);
 		} catch (IOException e) {
-			LOG.error("Could not serialize org.apache.flink.streaming.test.input",e);
+			LOG.error("Could not serialize org.apache.flink.streaming.test.input", e);
 			return;
 		}
 		publisher.send(bytes);
 	}
-
-
 
 	@Override
 	public void close() {
 		/*
 		signal close to output receiver
 		 */
-		publisher.send("END".getBytes());
+		String end = String.format("END %d",
+				getRuntimeContext().getIndexOfThisSubtask());
+		publisher.send(end);
 		publisher.close();
 		context.term();
 	}
