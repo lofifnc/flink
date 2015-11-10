@@ -27,7 +27,6 @@ import org.apache.flink.streaming.api.functions.source.FromElementsFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.test.tool.input.EventTimeInput;
-import org.apache.flink.streaming.test.tool.input.FromStreamRecordsFunction;
 import org.apache.flink.streaming.test.tool.input.Input;
 import org.apache.flink.streaming.test.tool.input.ParallelFromStreamRecordsFunction;
 import org.apache.flink.streaming.util.TestStreamEnvironment;

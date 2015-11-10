@@ -17,11 +17,9 @@
 
 package org.apache.flink.streaming.test.tool.core.input;
 
-import org.apache.commons.collections.ListUtils;
-import org.apache.flink.streaming.test.tool.input.EventTimeInput;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
+import org.apache.flink.streaming.test.tool.input.EventTimeInput;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

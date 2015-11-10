@@ -21,7 +21,6 @@ package org.apache.flink.streaming.test.tool.matcher
 import org.apache.flink.streaming.test.tool.CoreSpec
 import org.apache.flink.streaming.test.tool.matcher.partial.PartialMatcher
 import org.mockito.Mockito._
-import org.mockito.Matchers.any
 
 import scala.collection.mutable.ArrayBuffer
 

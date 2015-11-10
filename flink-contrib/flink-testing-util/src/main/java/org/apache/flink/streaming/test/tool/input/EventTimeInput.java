@@ -17,12 +17,8 @@
 
 package org.apache.flink.streaming.test.tool.input;
 
-import com.google.common.collect.Iterables;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
-import org.apache.flink.util.SplittableIterator;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**

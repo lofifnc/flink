@@ -17,7 +17,7 @@
  */
 package org.apache.flink.streaming.test.tool.matcher.partial
 
-import org.apache.flink.streaming.test.tool.matcher.{ListMatchers, ListMatcher}
+import org.apache.flink.streaming.test.tool.matcher.ListMatcher
 import org.hamcrest.Description
 import org.scalatest.exceptions.TestFailedException
 

@@ -17,13 +17,9 @@
 
 package org.apache.flink.streaming.test.tool.runtime.messaging;
 
-import java.security.InvalidParameterException;
-import java.util.Arrays;
-import java.util.Random;
-
-import com.google.common.primitives.Bytes;
-import org.apache.commons.lang.ArrayUtils;
 import org.zeromq.ZMQ;
+
+import java.util.Random;
 
 //
 //  Weather update server in Java

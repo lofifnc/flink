@@ -36,7 +36,8 @@ object ListMatchers extends Matchers {
    * @tparam T type to match
    * @return concrete [[ListMatcher]]
    */
-  def containsOnly[T](right: List[T])(implicit aggregating: Aggregating[List[T]]): ListMatcher[T] = {
+  def containsOnly[T](right: List[T])(implicit aggregating: Aggregating[List[T]])
+  : ListMatcher[T] = {
     new ListMatcher[T](right) {
       override def matchesSafely(left: List[T]): Boolean =
         aggregating.containsOnly(left, right)
@@ -57,7 +58,8 @@ object ListMatchers extends Matchers {
    * @tparam T type to match
    * @return concrete [[ListMatcher]]
    */
-  def containsAll[T](right: List[T])(implicit aggregating: Aggregating[List[T]]): ListMatcher[T] = {
+  def containsAll[T](right: List[T])(implicit aggregating: Aggregating[List[T]])
+  : ListMatcher[T] = {
     new ListMatcher[T](right) {
       override def matchesSafely(left: List[T]): Boolean =
         aggregating.containsAllOf(left, right)
@@ -81,7 +83,8 @@ object ListMatchers extends Matchers {
    * @tparam T type to match
    * @return concrete [[ListMatcher]]
    */
-  def containsInOrder[T](right: List[T])(implicit sequencing: Sequencing[List[T]]): ListMatcher[T] = {
+  def containsInOrder[T](right: List[T])(implicit sequencing: Sequencing[List[T]])
+  : ListMatcher[T] = {
     new ListMatcher[T](right) {
       override def matchesSafely(left: List[T]): Boolean =
         sequencing.containsInOrder(left, right)

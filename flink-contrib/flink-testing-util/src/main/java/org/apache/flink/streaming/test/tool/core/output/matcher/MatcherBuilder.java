@@ -17,7 +17,6 @@
 
 package org.apache.flink.streaming.test.tool.core.output.matcher;
 
-import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 

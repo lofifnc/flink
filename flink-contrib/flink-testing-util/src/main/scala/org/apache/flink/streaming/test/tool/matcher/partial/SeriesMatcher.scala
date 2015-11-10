@@ -17,7 +17,8 @@
  */
 package org.apache.flink.streaming.test.tool.matcher.partial
 
-import org.apache.flink.streaming.test.tool.matcher.{ListMatchers, ListMatcher, ListMatcherBuilder}
+import org.apache.flink.streaming.test.tool.matcher.{ListMatcher, ListMatcherBuilder, ListMatchers}
+
 import scala.collection.mutable.ArrayBuffer
 
 /**

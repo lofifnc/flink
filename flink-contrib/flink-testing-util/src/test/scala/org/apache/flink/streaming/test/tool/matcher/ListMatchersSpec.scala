@@ -18,7 +18,6 @@
 package org.apache.flink.streaming.test.tool.matcher
 
 import org.apache.flink.streaming.test.tool.CoreSpec
-import org.scalatest.exceptions.TestFailedException
 
 class ListMatchersSpec extends CoreSpec {
 

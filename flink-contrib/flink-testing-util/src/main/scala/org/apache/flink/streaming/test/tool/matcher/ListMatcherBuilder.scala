@@ -17,10 +17,8 @@
  */
 package org.apache.flink.streaming.test.tool.matcher
 
-import java.util
-
 import org.apache.flink.streaming.test.tool.matcher.partial.OrderMatcher
-import org.hamcrest.{StringDescription, Matcher, Description, TypeSafeDiagnosingMatcher}
+import org.hamcrest.{Description, TypeSafeDiagnosingMatcher}
 import org.scalatest.exceptions.TestFailedException
 
 import scala.collection.JavaConversions._

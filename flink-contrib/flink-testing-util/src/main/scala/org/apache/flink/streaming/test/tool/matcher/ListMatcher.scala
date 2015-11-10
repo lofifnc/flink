@@ -17,8 +17,7 @@
  */
 package org.apache.flink.streaming.test.tool.matcher
 
-import org.hamcrest.{Description, TypeSafeMatcher, Matcher}
-import org.scalatest.exceptions.TestFailedException
+import org.hamcrest.{Description, TypeSafeMatcher}
 
 /**
  * Blueprint for a matcher that checks if a list of objects fulfills

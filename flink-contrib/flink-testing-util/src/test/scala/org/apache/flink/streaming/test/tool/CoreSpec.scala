@@ -18,12 +18,14 @@
 package org.apache.flink.streaming.test.tool
 
 
+import java.util.{List => JList}
+
 import org.apache.flink.streaming.runtime.streamrecord
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord
-import org.apache.flink.streaming.test.tool.input.{Input, EventTimeInput}
+import org.apache.flink.streaming.test.tool.input.{EventTimeInput, Input}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers, OptionValues}
-import java.util.{List => JList}
+
 import scala.collection.JavaConversions._
 
 abstract class CoreSpec
