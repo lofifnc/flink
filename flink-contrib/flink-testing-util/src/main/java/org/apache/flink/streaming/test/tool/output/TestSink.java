@@ -91,9 +91,9 @@ public class TestSink<IN> extends RichSinkFunction<IN> {
 		/*
 		transmit parallelism
 		 */
-		publisher.send(String.format("START %d %d",
-				indexofThisSubTask,
-				numberOfSubTasks), 0);
+//		publisher.send(String.format("START %d %d",
+//				indexofThisSubTask,
+//				numberOfSubTasks), 0);
 		/*
 		serialize output and send
 		 */
@@ -112,9 +112,9 @@ public class TestSink<IN> extends RichSinkFunction<IN> {
 		/*
 		signal close to output receiver
 		 */
-		String end = String.format("END %d",
-				getRuntimeContext().getIndexOfThisSubtask());
-		publisher.send(end);
+//		String end = String.format("END %d",
+//				getRuntimeContext().getIndexOfThisSubtask());
+		publisher.send("END",0);
 		publisher.close();
 		context.term();
 	}

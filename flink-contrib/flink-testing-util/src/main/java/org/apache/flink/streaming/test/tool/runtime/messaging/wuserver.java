@@ -21,6 +21,7 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.Random;
 
+import com.google.common.primitives.Bytes;
 import org.apache.commons.lang.ArrayUtils;
 import org.zeromq.ZMQ;
 
@@ -31,40 +32,7 @@ import org.zeromq.ZMQ;
 //
 public class wuserver {
 
-	enum MessageType {
-		START("START".getBytes()),
-		END("END".getBytes()),
-		ELEM("ELEM".getBytes()),
-		SER("SER".getBytes());
 
-		private final byte[] bytes;
-		private final int lenght;
-
-		MessageType(byte[] bytes) {
-			this.bytes = bytes;
-			this.lenght = bytes.length;
-		}
-
-		private byte[] getBytes() {
-			return getBytes();
-		}
-
-		public static MessageType getMessageType(byte[] message) {
-			for(MessageType type : MessageType.values()) {
-				if(isType(message,type)) {
-					return type;
-				}
-			}
-			throw new UnsupportedOperationException("could not find type for message");
-		}
-
-
-		public static Boolean isType(byte[] message, MessageType type) {
-			byte[] subArray = Arrays.copyOfRange(message,0,type.lenght);
-			return ArrayUtils.isEquals(subArray,type.bytes);
-		}
-
-	}
 
 
 	public static void main(String[] args) throws Exception {
@@ -88,10 +56,10 @@ public class wuserver {
 
 		String startmsg = String.format("START %d %d", 1, 2);
 
-		
+		byte[] other = "strtearst".getBytes();
 
-		System.out.println(MessageType.getMessageType(startmsg.getBytes()).name());
-		System.out.println(ArrayUtils.toString(startmsg.getBytes()));
+
+
 		//switch()
 
 
