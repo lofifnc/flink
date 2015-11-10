@@ -17,6 +17,7 @@
 
 package org.apache.flink.streaming.test.tool.output;
 
+import org.apache.flink.streaming.test.tool.runtime.messaging.OutputListener;
 import org.scalatest.exceptions.TestFailedException;
 
 /**

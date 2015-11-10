@@ -2,10 +2,9 @@ package org.apache.flink.streaming.test.tool.output.assertion.tuple;
 
 import com.google.common.collect.Iterables;
 import org.apache.flink.api.java.tuple.Tuple;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.streaming.test.tool.KeyMatcherPair;
-import org.apache.flink.streaming.test.tool.TupleMap;
-import org.apache.flink.streaming.test.tool.core.output.map.TupleMask;
+import org.apache.flink.streaming.test.tool.core.KeyMatcherPair;
+import org.apache.flink.streaming.test.tool.core.TupleMap;
+import org.apache.flink.streaming.test.tool.core.output.TupleMask;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;

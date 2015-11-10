@@ -1,9 +1,8 @@
 package org.apache.flink.streaming.test.tool.output.assertion;
 
 import org.apache.flink.api.java.tuple.Tuple;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.streaming.test.tool.KeyMatcherPair;
-import org.apache.flink.streaming.test.tool.core.output.map.TupleMask;
+import org.apache.flink.streaming.test.tool.core.KeyMatcherPair;
+import org.apache.flink.streaming.test.tool.core.output.TupleMask;
 import org.apache.flink.streaming.test.tool.output.assertion.tuple.TupleMapMatchers;
 import org.hamcrest.Matcher;
 

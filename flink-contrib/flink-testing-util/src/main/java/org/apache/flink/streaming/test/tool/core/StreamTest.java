@@ -20,10 +20,9 @@ package org.apache.flink.streaming.test.tool.core;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.test.tool.core.output.ExpectedOutput;
 import org.apache.flink.streaming.test.tool.input.EventTimeInput;
 import org.apache.flink.streaming.test.tool.input.Input;
-import org.apache.flink.streaming.test.tool.output.OutputHandler;
+import org.apache.flink.streaming.test.tool.runtime.OutputHandler;
 import org.apache.flink.streaming.test.tool.output.OutputVerifier;
 import org.apache.flink.streaming.test.tool.output.TestSink;
 import org.apache.flink.streaming.test.tool.output.assertion.HamcrestVerifier;
@@ -42,24 +41,18 @@ import java.util.concurrent.ExecutionException;
  */
 public class StreamTest {
 
-	/**
-	 * stream environment
-	 */
+	/** stream environment */
 	private TestingStreamEnvironment env;
-	/**
-	 * list of registered verifiers for checking the output
-	 */
-	private List<OutputHandler> verifiers;
-	/**
-	 * the current port used for transmitting the output via zeroMQ
-	 */
+	/** list of registered handlers to receive the output */
+	private List<OutputHandler> handler;
+	/** the current port used for transmitting the output via zeroMQ */
 	private Integer currentPort;
 
 	@Before
 	public void initialize() throws Exception {
-		env = TestingStreamEnvironment.createTestEnvironment(1);
+		env = TestingStreamEnvironment.createTestEnvironment(2);
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
-		verifiers = new ArrayList<>();
+		handler = new ArrayList<>();
 		currentPort = 5555;
 	}
 
@@ -94,7 +87,7 @@ public class StreamTest {
 	 * @return the created sink.
 	 */
 	public <IN> TestSink<IN> createTestSink(OutputVerifier<IN> verifier) {
-		verifiers.add(new OutputHandler<IN>(currentPort, verifier));
+		handler.add(new OutputHandler<IN>(currentPort, verifier));
 		TestSink<IN> sink = new TestSink<IN>(currentPort);
 		currentPort++;
 		return sink;
@@ -102,29 +95,22 @@ public class StreamTest {
 
 	/**
 	 * Creates a TestSink using {@link org.hamcrest.Matcher} to verify the output.
+	 *
 	 * @param matcher of type Iterable<IN>
 	 * @param <IN>
 	 * @return the created sink.
 	 */
 	public <IN> TestSink<IN> createTestSink(org.hamcrest.Matcher<Iterable<IN>> matcher) {
-		System.out.println("hamcrest");
 		OutputVerifier<IN> verifier = new HamcrestVerifier<>(matcher);
 		return createTestSink(verifier);
 	}
 
-//	/**
-//	 * Creates a TestSink to verify your job output.
-//	 *
-//	 * @param expectedOutput which will be used to verify the received records
-//	 * @param <IN>           type of the input
-//	 * @return the created sink.
-//	 */
-//	public <IN> TestSink<IN> createTestSink(ExpectedOutput<IN> expectedOutput) {
-//		return createTestSink(expectedOutput.getVerifier());
-//	}
-
 	public <T> void matchStream(DataStream<T> stream, OutputMatcher<T> matcher) {
 		stream.addSink(createTestSink(matcher));
+	}
+
+	public void setParallelism(int n) {
+		env.setParallelism(n);
 	}
 
 	/**
@@ -134,7 +120,7 @@ public class StreamTest {
 	public void executeTest() throws Throwable {
 
 		env.execute();
-		for (OutputHandler v : verifiers) {
+		for (OutputHandler v : handler) {
 			try {
 				v.getTestResult();
 			} catch (ExecutionException e) {

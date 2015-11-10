@@ -29,6 +29,7 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.test.tool.input.EventTimeInput;
 import org.apache.flink.streaming.test.tool.input.FromStreamRecordsFunction;
 import org.apache.flink.streaming.test.tool.input.Input;
+import org.apache.flink.streaming.test.tool.input.ParallelFromStreamRecordsFunction;
 import org.apache.flink.streaming.util.TestStreamEnvironment;
 import org.apache.flink.test.util.ForkableFlinkMiniCluster;
 import org.apache.flink.test.util.TestBaseUtils;
@@ -164,7 +165,7 @@ public class TestingStreamEnvironment extends TestStreamEnvironment {
 
 		SourceFunction<OUT> function;
 		try {
-			function = new FromStreamRecordsFunction<OUT>(typeInfo.createSerializer(getConfig()), data);
+			function = new ParallelFromStreamRecordsFunction<OUT>(typeInfo.createSerializer(getConfig()), data);
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}

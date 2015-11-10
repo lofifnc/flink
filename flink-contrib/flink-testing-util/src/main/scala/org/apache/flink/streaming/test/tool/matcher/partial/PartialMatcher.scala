@@ -104,7 +104,6 @@ abstract class PartialMatcher[T](constraints: ArrayBuffer[ListMatcher[T]], right
    * @throws TestFailedException if the predicate does not match
    */
   override def matchesSafely(left: List[T]): Boolean = {
-    println("ll " + constraints.size)
     constraints.map { (t) =>
       t.matchesSafely(left)
     }.reduce(_ && _)

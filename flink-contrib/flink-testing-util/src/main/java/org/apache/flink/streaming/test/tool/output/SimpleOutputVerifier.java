@@ -17,6 +17,7 @@
 
 package org.apache.flink.streaming.test.tool.output;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.scalatest.exceptions.TestFailedException;
 
 import java.util.ArrayList;

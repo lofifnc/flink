@@ -141,7 +141,6 @@ object ListMatchers extends Matchers {
         rightDuplicates.foreach {
           case (elem, count) =>
             if(leftDuplicates.contains(elem)) {
-              println(elem, leftDuplicates(elem), count)
               if (leftDuplicates(elem) > count) {
                 return false
               }

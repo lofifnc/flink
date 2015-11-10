@@ -1,4 +1,4 @@
-package org.apache.flink.streaming.test.tool;
+package org.apache.flink.streaming.test.tool.core;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.flink.api.java.tuple.Tuple;

@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.output;
+package org.apache.flink.streaming.test.tool.runtime;
+
+import org.apache.flink.streaming.test.tool.output.OutputVerifier;
+import org.apache.flink.streaming.test.tool.runtime.messaging.OutputListener;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
@@ -24,8 +27,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
 /**
- * Registers a zeroMQ context and listens for output from the appropriate sink
- * the getOutput method is used to wait for output
+ * Provides a asynchronous method to wait for test results
+ *
  * @param <OUT> type of data the sink is sending to the listener.
  */
 public class OutputHandler<OUT> {

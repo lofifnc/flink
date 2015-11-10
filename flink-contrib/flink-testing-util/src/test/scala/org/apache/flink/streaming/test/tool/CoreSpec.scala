@@ -17,8 +17,14 @@
  */
 package org.apache.flink.streaming.test.tool
 
+
+import org.apache.flink.streaming.runtime.streamrecord
+import org.apache.flink.streaming.runtime.streamrecord.StreamRecord
+import org.apache.flink.streaming.test.tool.input.{Input, EventTimeInput}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers, OptionValues}
+import java.util.{List => JList}
+import scala.collection.JavaConversions._
 
 abstract class CoreSpec
   extends FlatSpec
@@ -26,4 +32,16 @@ abstract class CoreSpec
   with OptionValues
   with MockitoSugar {
 
+  class TestEventTimeInput[T](input: List[T]) extends EventTimeInput[T] {
+    override def getInput: JList[StreamRecord[T]] =
+      input.map(new streamrecord.StreamRecord[T](_, 0))
+  }
+
+  class TestInput[T](input: List[T]) extends Input[T] {
+    override def getInput: JList[T] = input
+  }
+
+  def recordsToValues[T](lst: Iterable[StreamRecord[T]]): List[T] = {
+    lst.map(_.getValue).toList
+  }
 }

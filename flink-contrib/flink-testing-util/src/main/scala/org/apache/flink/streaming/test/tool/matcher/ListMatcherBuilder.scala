@@ -112,7 +112,6 @@ class ListMatcherBuilder[T](val right: List[T]) extends TypeSafeDiagnosingMatche
   override def describeTo(description: Description): Unit = {
     description.appendText("output ")
     constraints.foreach { m =>
-      println("m " + m.describeTo(new StringDescription()))
       description.appendDescriptionOf(m)
       description.appendText(" ")
     }

@@ -1,11 +1,8 @@
-package org.apache.flink.streaming.test.tool.core.output.map;
+package org.apache.flink.streaming.test.tool.core.output;
 
 
 import org.apache.flink.api.java.tuple.Tuple;
-import org.apache.flink.streaming.test.tool.TupleMap;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.flink.streaming.test.tool.core.TupleMap;
 
 public class TupleMask<T extends Tuple> {
 	private String[] keys;

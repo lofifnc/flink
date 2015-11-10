@@ -23,7 +23,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.test.tool.core.StreamTest;
 import org.apache.flink.streaming.test.tool.core.output.ExpectedOutput;
-import org.apache.flink.streaming.test.tool.core.output.map.TupleMask;
+import org.apache.flink.streaming.test.tool.core.output.TupleMask;
 import org.apache.flink.streaming.test.tool.output.assertion.AssertBlock;
 import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
 
@@ -50,11 +50,14 @@ public class Test extends StreamTest {
 		});
 	}
 
+
+
 	@org.junit.Test
 	public void testWindowing() throws Exception {
 
 		TupleMask<Tuple2<Integer,String>> mask = TupleMask.create("value","name");
 
+		setParallelism(2);
 
 		//------- input definition
 		DataStream<Tuple2<Integer, String>> testStream = createTestStream(
@@ -71,12 +74,13 @@ public class Test extends StreamTest {
 						.assertThat("name", either(is("test")).or(is("bar")))
 						.anyOfThem().onEachRecord();
 
-
 		matchStream(window(testStream), matcher);
 	}
 
 	@org.junit.Test
 	public void testMap() throws Exception {
+
+		setParallelism(2);
 
 		//-------------- input
 		DataStream<Tuple2<Integer, String>> stream = createTestStream(
@@ -89,7 +93,7 @@ public class Test extends StreamTest {
 		ExpectedOutput<Tuple2<String, Integer>> expectedOutput = new ExpectedOutput<Tuple2<String, Integer>>()
 				.expect(Tuple2.of("test", 1))
 				.expect(Tuple2.of("foo", 2));
-		expectedOutput.refine().noDuplicates().inOrder().all();
+		expectedOutput.refine().noDuplicates();
 
 		matchStream(swap(stream), expectedOutput);
 

@@ -64,7 +64,6 @@ public class MatcherBuilder<T> extends TypeSafeMatcher<List<T>> {
 
 	@Override
 	public boolean matchesSafely(List<T> list) {
-		System.out.println("test");
 		return builder.validate(list);
 	}
 

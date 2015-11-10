@@ -15,27 +15,33 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.output;
+package org.apache.flink.streaming.test.tool.core.output;
 
-import org.apache.flink.streaming.test.tool.core.output.matcher.MatcherBuilder;
+import org.apache.flink.streaming.test.tool.output.OutputVerifier;
+import org.scalatest.exceptions.TestFailedException;
 
-import java.util.List;
+public abstract class OutputTranslator<IN,OUT> implements OutputVerifier<IN> {
 
-///**
-// * Uses the matcher provided by {@link MatcherBuilder} to
-// * provide a {@link SimpleOutputVerifier}.
-// * @param <T>
-// */
-//public class ListVerifier<T> extends SimpleOutputVerifier<T> {
-//
-//	private MatcherBuilder<T> matcher;
-//
-//	public ListVerifier(MatcherBuilder<T> matcher) {
-//		this.matcher = matcher;
-//	}
-//
-//	@Override
-//	public void verify(List<T> output) {
-//		matcher.verify(output);
-//	}
-//}
+	OutputVerifier<OUT> verifier;
+
+	public OutputTranslator(OutputVerifier<OUT> verifier) {
+		this.verifier = verifier;
+	}
+
+	protected abstract OUT translate(IN record);
+
+	@Override
+	public void init() {
+		verifier.init();
+	}
+
+	@Override
+	public void receive(IN elem) throws TestFailedException {
+		verifier.receive(translate(elem));
+	}
+
+	@Override
+	public void finish() throws TestFailedException {
+		verifier.finish();
+	}
+}

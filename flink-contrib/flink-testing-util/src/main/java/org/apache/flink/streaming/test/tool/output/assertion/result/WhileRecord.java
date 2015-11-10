@@ -1,6 +1,5 @@
 package org.apache.flink.streaming.test.tool.output.assertion.result;
 
-import org.apache.flink.streaming.test.tool.TupleMap;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;

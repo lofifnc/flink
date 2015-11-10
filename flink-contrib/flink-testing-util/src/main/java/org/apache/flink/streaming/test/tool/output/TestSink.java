@@ -17,6 +17,7 @@
 
 package org.apache.flink.streaming.test.tool.output;
 
+import com.google.common.primitives.Bytes;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
@@ -70,8 +71,15 @@ public class TestSink<IN> extends RichSinkFunction<IN> {
 
 		int numberOfSubTasks = getRuntimeContext().getNumberOfParallelSubtasks();
 		int indexofThisSubTask = getRuntimeContext().getIndexOfThisSubtask();
+		byte[] msg;
 
 		if (serializer == null) {
+			/*
+			transmit parallelism
+		 	*/
+			publisher.send(String.format("START %d %d",
+					indexofThisSubTask,
+					numberOfSubTasks), 0);
 			/*
 			create serializer
 			 */
@@ -81,19 +89,15 @@ public class TestSink<IN> extends RichSinkFunction<IN> {
 			send serializer to output receiver
 			 */
 			try {
-				publisher.send(SerializeUtil.serialize(serializer));
+				msg = Bytes.concat("SER".getBytes(), SerializeUtil.serialize(serializer));
+				publisher.send(msg, 0);
 			} catch (IOException e) {
 				LOG.error("Could not serialize TypeSerializer", e);
 				return;
 			}
 		}
-		System.out.println("out " + next);
-		/*
-		transmit parallelism
-		 */
-//		publisher.send(String.format("START %d %d",
-//				indexofThisSubTask,
-//				numberOfSubTasks), 0);
+		System.out.println("out " + indexofThisSubTask + " " + next);
+
 		/*
 		serialize output and send
 		 */
@@ -101,10 +105,11 @@ public class TestSink<IN> extends RichSinkFunction<IN> {
 		try {
 			bytes = SerializeUtil.serialize(next, serializer);
 		} catch (IOException e) {
-			LOG.error("Could not serialize org.apache.flink.streaming.test.input", e);
+			LOG.error("Could not serialize input", e);
 			return;
 		}
-		publisher.send(bytes);
+		msg = Bytes.concat("ELEM".getBytes(), bytes);
+		publisher.send(msg, 0);
 	}
 
 	@Override
@@ -112,9 +117,9 @@ public class TestSink<IN> extends RichSinkFunction<IN> {
 		/*
 		signal close to output receiver
 		 */
-//		String end = String.format("END %d",
-//				getRuntimeContext().getIndexOfThisSubtask());
-		publisher.send("END",0);
+		String end = String.format("END %d",
+				getRuntimeContext().getIndexOfThisSubtask());
+		publisher.send(end, 0);
 		publisher.close();
 		context.term();
 	}

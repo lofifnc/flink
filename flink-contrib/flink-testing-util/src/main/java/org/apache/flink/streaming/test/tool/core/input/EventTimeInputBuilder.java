@@ -32,7 +32,7 @@ import java.util.List;
  *
  * @param <T> value type
  */
-public class EventTimeInputBuilder<T> extends EventTimeInput<T> {
+public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 
 	/**
 	 * List of input containing StreamRecords

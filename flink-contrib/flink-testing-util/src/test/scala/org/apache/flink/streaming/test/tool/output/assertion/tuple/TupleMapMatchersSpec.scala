@@ -1,8 +1,9 @@
 package org.apache.flink.streaming.test.tool.output.assertion.tuple
 
 import org.apache.flink.api.java.tuple.{Tuple3 => Fluple3}
-import org.apache.flink.streaming.test.tool.core.output.map.TupleMask
-import org.apache.flink.streaming.test.tool.{CoreSpec, KeyMatcherPair}
+import org.apache.flink.streaming.test.tool.core.KeyMatcherPair
+import org.apache.flink.streaming.test.tool.core.output.TupleMask
+import org.apache.flink.streaming.test.tool.CoreSpec
 import org.hamcrest.Matchers
 
 import scala.collection.JavaConverters._

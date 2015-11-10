@@ -1,4 +1,4 @@
-package org.apache.flink.streaming.test.tool;
+package org.apache.flink.streaming.test.tool.core;
 
 import org.hamcrest.Matcher;
 
