@@ -105,7 +105,7 @@ public class StreamTest {
 		return createTestSink(verifier);
 	}
 
-	public <T> void matchStream(DataStream<T> stream, OutputMatcher<T> matcher) {
+	public <T> void assertStream(DataStream<T> stream, OutputMatcher<T> matcher) {
 		stream.addSink(createTestSink(matcher));
 	}
 

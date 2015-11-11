@@ -73,7 +73,7 @@ public class Test extends StreamTest {
 						.assertThat("name", either(is("test")).or(is("bar")))
 						.anyOfThem().onEachRecord();
 
-		matchStream(window(testStream), matcher);
+		assertStream(window(testStream), matcher);
 	}
 
 	@org.junit.Test
@@ -92,9 +92,8 @@ public class Test extends StreamTest {
 		ExpectedOutput<Tuple2<String, Integer>> expectedOutput = new ExpectedOutput<Tuple2<String, Integer>>()
 				.expect(Tuple2.of("test", 1))
 				.expect(Tuple2.of("foo", 2));
-		expectedOutput.refine().noDuplicates();
 
-		matchStream(swap(stream), expectedOutput);
+		assertStream(swap(stream), expectedOutput);
 
 	}
 }

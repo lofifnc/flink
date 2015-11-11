@@ -27,6 +27,7 @@ public class TupleMap<T extends Tuple>{
 	private String[] keys;
 
 	public TupleMap(T tuple,String... names) {
+		//TODO check length
 		this.tuple = tuple;
 		keys = names;
 	}

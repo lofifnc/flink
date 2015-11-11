@@ -28,9 +28,9 @@ import java.util.List;
  * record has arrived in the sink
  * @param <T>
  */
-abstract public class SimpleOutputVerifier<T> implements OutputVerifier<T> {
+public abstract class SimpleOutputVerifier<T> implements OutputVerifier<T> {
 
-	private ArrayList<T> output = new ArrayList<>();
+	private List<T> output = new ArrayList<>();
 
 	/**
 	 * This method is called once all output has arrived in the {@link TestSink}

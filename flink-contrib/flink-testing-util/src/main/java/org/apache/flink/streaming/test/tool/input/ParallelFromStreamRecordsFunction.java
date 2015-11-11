@@ -87,7 +87,7 @@ public class ParallelFromStreamRecordsFunction<T> extends RichEventTimeSourceFun
 		List<StreamRecord<T>> outputSplit;
 
 		//-----------------------------------------------------------------
-		// Split lists and calculate watermarks
+		// Split input and calculate watermarks
 		//-----------------------------------------------------------------
 
 		int numberOfSubTasks = getRuntimeContext().getNumberOfParallelSubtasks();
