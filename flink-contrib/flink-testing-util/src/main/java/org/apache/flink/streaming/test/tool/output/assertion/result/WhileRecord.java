@@ -35,10 +35,11 @@ public abstract class WhileRecord<T> extends TypeSafeDiagnosingMatcher<Iterable<
 	public boolean matchesSafely(Iterable<T> objects, Description mismatch) {
 		int matches = 0;
 		Description mismatches = new StringDescription();
-
+		int i = 0;
 		for (T item : objects) {
 			if (!matcher.matches(item)) {
 				matcher.describeMismatch(item, mismatches);
+				mismatches.appendText(" on record #"+i);
 			} else {
 				matches++;
 				if (!validWhile(matches)) {
@@ -46,6 +47,7 @@ public abstract class WhileRecord<T> extends TypeSafeDiagnosingMatcher<Iterable<
 					return false;
 				}
 			}
+			i++;
 		}
 		describeMismatch(matches, false, mismatch, mismatches);
 		return validAfter(matches);

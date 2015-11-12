@@ -19,48 +19,66 @@ package org.apache.flink.streaming.test.tool.runtime.messaging;
 
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.streaming.test.tool.output.OutputVerifier;
+import org.apache.flink.streaming.test.tool.runtime.StreamTestFailedException;
 import org.apache.flink.streaming.test.tool.util.SerializeUtil;
-import org.scalatest.exceptions.TestFailedException;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
  * Opens a 0MQ context and listens for output coming from a sink.
- * Calls the verifier with the output.
+ * Calls the {@link OutputVerifier} with the output.
  *
  * @param <OUT> input type of the sink
  */
 public class OutputListener<OUT> implements Callable<Boolean> {
 
+	/**Port 0MQ listens to.*/
 	private final int port;
+	/** Verifier provided with output */
 	private final OutputVerifier<OUT> verifier;
-	private Set<Integer> participatingSinks = new HashSet<>();
-	private Set<Integer> finishedSinks = new HashSet<>();
+	/** Number of parallel instances */
 	private int parallelism = -1;
+	/** Set of parallel sink instances that have been started */
+	private final Set<Integer> participatingSinks = new HashSet<>();
+	/** Set of finished parallel sink instances */
+	private final Set<Integer> finishedSinks = new HashSet<>();
+	/** Serializer to use for output */
 	TypeSerializer<OUT> typeSerializer = null;
+	/** Number of records received */
+	private int numRecords = 0;
+	/** Maximum of records to receive */
+	private final long maxElements;
 
-	public OutputListener(int port, OutputVerifier<OUT> verifier) {
+	public OutputListener(int port, OutputVerifier<OUT> verifier, long maxElements) {
 		this.port = port;
 		this.verifier = verifier;
+		this.maxElements = maxElements;
 	}
 
 
-	public Boolean call() throws TestFailedException {
+	/**
+	 * Listens for output from the test sink.
+	 * If the sink is running in parallel
+	 *
+	 * @return If the test terminated regularly true else false
+	 * @throws StreamTestFailedException
+	 */
+	public Boolean call() throws StreamTestFailedException {
 		ZMQ.Context context = ZMQ.context(1);
 		// socket to receive from sink
 		ZMQ.Socket subscriber = context.socket(ZMQ.PULL);
 		subscriber.bind("tcp://*:" + port);
 
+		Action nextStep = Action.ABORT;
 		// receive output from sink until finished all sinks are finished
 		try {
-			boolean isFinished = processMessage(subscriber.recv());
-			while (!isFinished) {
-				isFinished = processMessage(subscriber.recv());
+			nextStep = processMessage(subscriber.recv());
+			while (nextStep == Action.CONTINUE) {
+				nextStep = processMessage(subscriber.recv());
 				//check if test is stopped
 				if (Thread.currentThread().isInterrupted()) {
 					break;
@@ -70,22 +88,22 @@ public class OutputListener<OUT> implements Callable<Boolean> {
 			subscriber.close();
 			context.close();
 			verifier.finish();
-			return false;
+			return true;
 		}
 		// close the connection
 		subscriber.close();
 		context.close();
 		verifier.finish();
-		ArrayList<OUT> sinkInput = new ArrayList<>();
-		// deserialize messages received from sink
-		return true;
+		// if the last action was not FINISH return false
+		return nextStep == Action.FINISH;
 	}
 
-	private void stop() {
-
+	private enum Action {
+		CONTINUE,ABORT,FINISH
 	}
 
-	private Boolean processMessage(byte[] bytes) throws IOException {
+	private Action processMessage(byte[] bytes)
+			throws IOException, StreamTestFailedException {
 
 		MessageType type = MessageType.getMessageType(bytes);
 		String msg;
@@ -111,7 +129,12 @@ public class OutputListener<OUT> implements Callable<Boolean> {
 			case ELEM:
 				out = type.getPayload(bytes);
 				OUT elem = SerializeUtil.deserialize(out, typeSerializer);
+				numRecords++;
 				verifier.receive(elem);
+				//
+				if(numRecords >= maxElements) {
+					return Action.ABORT;
+				}
 				break;
 			case END:
 				msg = new String(bytes);
@@ -123,9 +146,9 @@ public class OutputListener<OUT> implements Callable<Boolean> {
 			if (participatingSinks.size() != parallelism) {
 				throw new IOException("not all parallel sinks have been initialized");
 			}
-			return true;
+			return Action.FINISH;
 		}
-		return false;
+		return Action.CONTINUE;
 	}
 }
 

@@ -22,16 +22,15 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.test.tool.core.StreamTest;
 import org.apache.flink.streaming.test.tool.core.output.ExpectedOutput;
-import org.apache.flink.streaming.test.tool.core.output.TupleMask;
 import org.apache.flink.streaming.test.tool.output.assertion.AssertBlock;
 import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
 
 import static org.apache.flink.streaming.test.tool.core.Sugar.after;
-import static org.apache.flink.streaming.test.tool.core.Sugar.startWith;
+import static org.apache.flink.streaming.test.tool.core.Sugar.before;
 import static org.apache.flink.streaming.test.tool.core.Sugar.seconds;
+import static org.apache.flink.streaming.test.tool.core.Sugar.startWith;
 import static org.apache.flink.streaming.test.tool.core.Sugar.times;
 import static org.hamcrest.Matchers.either;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 
 public class Test extends StreamTest {
@@ -62,7 +61,8 @@ public class Test extends StreamTest {
 		//------- input definition
 		DataStream<Tuple2<Integer, String>> testStream = createTestStream(
 				startWith(Tuple2.of(1, "fritz"))
-						.emit(Tuple2.of(2, "hans"), after(10, seconds))
+						.emit(Tuple2.of(1, "hans"), after(15, seconds))
+						.emit(Tuple2.of(1, "heidi"), before(5, seconds))
 						.emit(Tuple2.of(3, "peter"), after(20, seconds), times(10))
 						.repeatAll(after(10, seconds), times(1))
 		);
@@ -70,9 +70,9 @@ public class Test extends StreamTest {
 		//------- output definition
 		OutputMatcher<Tuple2<Integer, String>> matcher =
 				new AssertBlock<Tuple2<Integer,String>>("value","name")
-						.assertThat("value", greaterThan(2))
+						.assertThat("value", is(3))
 						.assertThat("name", either(is("fritz")).or(is("peter")))
-						.anyOfThem().onEachRecord();
+						.eachOfThem().onEachRecord();
 
 		//------- test execution
 		assertStream(window(testStream), matcher);

@@ -17,7 +17,7 @@
 
 package org.apache.flink.streaming.test.tool.output;
 
-import org.scalatest.exceptions.TestFailedException;
+import org.apache.flink.streaming.test.tool.runtime.StreamTestFailedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ public abstract class SimpleOutputVerifier<T> implements OutputVerifier<T> {
 	 * to verify the output.
 	 * @param output from the test run
 	 */
-	abstract public void verify(List<T> output);
+	abstract public void verify(List<T> output) throws StreamTestFailedException;
 
 	@Override
 	public void init() {
@@ -45,12 +45,12 @@ public abstract class SimpleOutputVerifier<T> implements OutputVerifier<T> {
 	}
 
 	@Override
-	public void receive(T elem) throws TestFailedException {
-		output.add(elem);
+	public void receive(T record) throws StreamTestFailedException {
+		output.add(record);
 	}
 
 	@Override
-	public void finish() throws TestFailedException {
+	public void finish() throws StreamTestFailedException {
 		verify(output);
 	}
 

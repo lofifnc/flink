@@ -49,6 +49,9 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * @return
 	 */
 	public static <T> EventTimeInputBuilder<T> create(T elem) {
+		if(elem == null ) {
+			throw new IllegalArgumentException("Elem has to be not null!");
+		}
 		return new EventTimeInputBuilder<T>(new StreamRecord<T>(elem, 0));
 	}
 
@@ -60,6 +63,9 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * @return
 	 */
 	public static <T> EventTimeInputBuilder<T> create(StreamRecord<T> record) {
+		if(record == null ) {
+			throw new IllegalArgumentException("Record has to be not null!");
+		}
 		return new EventTimeInputBuilder<T>(record);
 	}
 
@@ -71,6 +77,12 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * @return
 	 */
 	public EventTimeInputBuilder<T> emit(T elem, long timeStamp) {
+		if (timeStamp < 0) {
+			throw new IllegalArgumentException("negative timestamp: " + timeStamp);
+		}
+		if(elem == null ) {
+			throw new IllegalArgumentException("Elem has to be not null!");
+		}
 		input.add(new StreamRecord<T>(elem, timeStamp));
 		return this;
 	}
@@ -84,9 +96,12 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * @return
 	 */
 	public EventTimeInputBuilder<T> emit(T elem, TimeSpan timeSpan) {
+		if(timeSpan == null) {
+			throw new IllegalArgumentException("TimeBetween has to bo not null!");
+		}
 		long lastTimeStamp = input.get(input.size() - 1).getTimestamp();
-		long currentTimeStamp = lastTimeStamp + timeSpan.getTimeSpan();
-		input.add(new StreamRecord<T>(elem, currentTimeStamp));
+		long newTimeStamp = lastTimeStamp + timeSpan.getTimeSpan();
+		emit(elem, newTimeStamp);
 		return this;
 	}
 
@@ -97,7 +112,10 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * @return
 	 */
 	public EventTimeInputBuilder<T> emit(StreamRecord<T> record) {
-		input.add(record);
+		if(record == null ) {
+			throw new IllegalArgumentException("Record has to be not null!");
+		}
+		emit(record.getValue(),record.getTimestamp());
 		return this;
 	}
 
@@ -105,11 +123,17 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * Repeats the last element
 	 * @param times    number of times the input ist will be repeated
 	 */
-	public EventTimeInputBuilder<T> emit(T elem, TimeSpan timeBetween, int times) {
+	public EventTimeInputBuilder<T> emit(T elem, TimeSpan timeInterval, int times) {
+		if(timeInterval == null) {
+			throw new IllegalArgumentException("TimeBetween has to bo not null!");
+		}
+		if(times < 1) {
+			throw new IllegalArgumentException("Times has to be greater than 1.");
+		}
 		long ts = input.get(input.size() - 1).getTimestamp();
 		for (int i = 0; i < times; i++) {
-			ts = ts + timeBetween.getTimeSpan();
-			input.add(new StreamRecord<T>(elem,ts));
+			ts = ts + timeInterval.getTimeSpan();
+			emit(elem, ts);
 		}
 		return this;
 	}
@@ -165,6 +189,9 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 		while (it.hasNext()) {
 			record = it.next();
 			delta = record.getTimestamp() - previous;
+			if(last + delta < 0) {
+				throw new UnsupportedOperationException("Negative timestamp: " + last + delta);
+			}
 			append.add(new StreamRecord<T>(record.getValue(),
 					last + delta));
 			last = last + delta;

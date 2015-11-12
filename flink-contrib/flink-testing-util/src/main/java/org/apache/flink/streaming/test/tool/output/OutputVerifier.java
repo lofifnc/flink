@@ -17,8 +17,8 @@
 
 package org.apache.flink.streaming.test.tool.output;
 
+import org.apache.flink.streaming.test.tool.runtime.StreamTestFailedException;
 import org.apache.flink.streaming.test.tool.runtime.messaging.OutputListener;
-import org.scalatest.exceptions.TestFailedException;
 
 /**
  * Implement this interface to verify the input
@@ -36,17 +36,25 @@ public interface OutputVerifier<T> {
 	/**
 	 * This method is called when a record has arrived
 	 * at the test sink.
-	 * @param elem record that is received by the test sink
-	 * @throws TestFailedException if the output is not valid
+	 * <p>
+	 * The method must throw a {@link StreamTestFailedException},
+	 * which wraps the actual exception, if the test has failed.
+	 *
+	 * @param record that is received by the test sink
+	 * @throws StreamTestFailedException
 	 */
-	void receive(T elem) throws TestFailedException;
+	void receive(T record) throws StreamTestFailedException;
 
 	/**
 	 * This method is called by the {@link OutputListener}
 	 * when the test is finished and the last record has
-	 * been received
-	 * @throws TestFailedException if the complete output is not valid
+	 * been received.
+	 * <p>
+	 * The method must throw a {@link StreamTestFailedException},
+	 * which wraps the actual exception, if the test has failed.
+	 *
+	 * @throws StreamTestFailedException
 	 */
-	void finish() throws TestFailedException;
+	void finish() throws StreamTestFailedException;
 
 }

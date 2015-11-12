@@ -19,6 +19,11 @@ package org.apache.flink.streaming.test.tool.runtime;
 
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.runtime.StreamingMode;
@@ -32,6 +37,7 @@ import org.apache.flink.streaming.test.tool.input.Input;
 import org.apache.flink.streaming.test.tool.input.ParallelFromStreamRecordsFunction;
 import org.apache.flink.streaming.test.tool.output.OutputVerifier;
 import org.apache.flink.streaming.test.tool.output.TestSink;
+import org.apache.flink.streaming.test.tool.runtime.messaging.OutputListener;
 import org.apache.flink.streaming.util.TestStreamEnvironment;
 import org.apache.flink.test.util.ForkableFlinkMiniCluster;
 import org.apache.flink.test.util.TestBaseUtils;
@@ -44,25 +50,30 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class StreamTestEnvironment extends TestStreamEnvironment {
 
 	private final ForkableFlinkMiniCluster cluster;
 
-	/**
-	 * list of registered handlers to receive the output
-	 */
-	private List<OutputHandler> handler;
+	private final ListeningExecutorService executorService;
+
+	private final List<ListenableFuture<Boolean>> listeners = new ArrayList<>();
+
+	//TODO CountdownLatch
+	//TODO ThreadSafe
 
 	/**
 	 * Flag indicating whether the env has been shutdown forcefully
 	 */
-	private Boolean stopped = false;
+	private final AtomicBoolean stopped = new AtomicBoolean(false);
 
 	/**
-	 * time in milliseconds before the test gets stopped with a timeout
+	 * Time in milliseconds before the test gets stopped with a timeout
 	 */
-	private long timeout = 5000;
+	private long timeout = 2000;
 
 	/**
 	 * Task to timeout the test execution
@@ -70,15 +81,18 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 	private TimerTask stopExecution;
 
 	/**
-	 * the current port used for transmitting the output via zeroMQ
+	 * The current port used for transmitting the output via zeroMQ
 	 */
 	private Integer currentPort;
+
+	private final AtomicInteger runningListeners;
 
 	public StreamTestEnvironment(ForkableFlinkMiniCluster cluster, int parallelism) {
 		super(cluster, parallelism);
 		this.cluster = cluster;
-		handler = new ArrayList<>();
+		executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
 		currentPort = 5555;
+		runningListeners = new AtomicInteger(0);
 		stopExecution = new TimerTask() {
 			public void run() {
 				stopExecution();
@@ -87,10 +101,11 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 	}
 
 	/**
-	 * Factory method to create a new instance using a provided {@link ForkableFlinkMiniCluster}
+	 * Factory method to create a new instance, providing a
+	 * new instance of {@link ForkableFlinkMiniCluster}
 	 *
-	 * @param parallelism
-	 * @return
+	 * @param parallelism global setting for parallel execution.
+	 * @return new instance of StreamTestEnvironment
 	 * @throws Exception
 	 */
 	public static StreamTestEnvironment createTestEnvironment(int parallelism) throws Exception {
@@ -108,14 +123,24 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 
 	/**
 	 * Stop the execution of the test.
+	 * <p>
+	 * Shutting the local cluster down will, will notify
+	 * the listeners when the sinks are closed.
+	 * Thus terminating the execution gracefully.
 	 */
-	public void stopExecution() {
-		stopped = true;
+	public synchronized void stopExecution() {
+		if(stopped.get()) {
+			return;
+		}
+		stopped.set(true);
+		System.out.println("shutdown!");
 		cluster.shutdown();
 	}
 
 	/**
-	 * Starts the test execution. And collects the results.
+	 * Starts the test execution.
+	 * Collects the results from listeners after
+	 * the cluster has terminated.
 	 *
 	 * @throws Throwable any Exception that has occurred
 	 *                   during validation the test.
@@ -126,28 +151,35 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 		try {
 			super.execute();
 		} catch (JobTimeoutException e) {
-			//cluster has been shutdown forcefully
-			//most likely by at timeout.
-			stopped = true;
+			//cluster has been shutdown forcefully, most likely by at timeout.
+			stopped.set(true);
 		}
-		try {
-			for (OutputHandler v : handler) {
-				v.getTestResult();
+		//====================
+		// collect failures
+		//====================
+		for (ListenableFuture future : listeners) {
+			try {
+				future.get();
+			} catch (ExecutionException e) {
+				//check if it is a StreamTestFailedException
+				if (e.getCause() instanceof StreamTestFailedException) {
+					//unwrap exception
+					throw e.getCause().getCause();
+				}
 			}
-		} catch (ExecutionException e) {
-			throw e.getCause();
 		}
 	}
 
 	/**
 	 * Creates a TestSink to verify your job output.
+	 * The environment will register a port
 	 *
 	 * @param verifier which will be used to verify the received records
 	 * @param <IN>     type of the input
 	 * @return the created sink.
 	 */
 	public <IN> TestSink<IN> createTestSink(OutputVerifier<IN> verifier) {
-		handler.add(new OutputHandler<IN>(currentPort, verifier));
+		registerVerifier(currentPort, verifier);
 		TestSink<IN> sink = new TestSink<IN>(currentPort);
 		currentPort++;
 		return sink;
@@ -274,12 +306,13 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 	 * @return true if has been stopped forcefully.
 	 */
 	public Boolean hasBeenStopped() {
-		return stopped;
+		return stopped.get();
 	}
 
 	/**
 	 * Getter for the timeout interval
 	 * after the test execution gets stopped.
+	 *
 	 * @return timeout in milliseconds
 	 */
 	public Long getTimeoutInterval() {
@@ -289,10 +322,41 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 	/**
 	 * Setter for the timeout interval
 	 * after the test execution gets stopped.
+	 *
 	 * @param interval
 	 */
 	public void setTimeoutInterval(long interval) {
 		timeout = interval;
+	}
+
+	/**
+	 * Registers a verifier for a 0MQ port.
+	 *
+	 * @param port to listen on.
+	 * @param verifier verifier
+	 * @param <OUT>
+	 */
+	private <OUT> void registerVerifier(int port, OutputVerifier<OUT> verifier) {
+		ListenableFuture<Boolean> future = executorService
+				.submit(new OutputListener<OUT>(port, verifier,100));
+		runningListeners.incrementAndGet();
+		listeners.add(future);
+
+		Futures.addCallback(future, new FutureCallback<Boolean>() {
+			@Override
+			public void onSuccess(Boolean continueExecution) {
+				if(!continueExecution) {
+					if(runningListeners.decrementAndGet() == 0) {
+						stopExecution();
+					}
+				}
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+				//do nothing gets collected later.
+			}
+		});
 	}
 
 //    /**

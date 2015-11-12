@@ -19,6 +19,7 @@
 package org.apache.flink.streaming.test.tool.output.assertion;
 
 import org.apache.flink.streaming.test.tool.output.SimpleOutputVerifier;
+import org.apache.flink.streaming.test.tool.runtime.StreamTestFailedException;
 import org.hamcrest.Matcher;
 import org.junit.Assert;
 
@@ -33,7 +34,11 @@ public class HamcrestVerifier<T> extends SimpleOutputVerifier<T> {
 	}
 
 	@Override
-	public void verify(List<T> output) {
-		Assert.assertThat(output,matcher);
+	public void verify(List<T> output) throws StreamTestFailedException {
+		try {
+			Assert.assertThat(output, matcher);
+		} catch (AssertionError e) {
+			throw new StreamTestFailedException("Assertion Failed!",e);
+		}
 	}
 }

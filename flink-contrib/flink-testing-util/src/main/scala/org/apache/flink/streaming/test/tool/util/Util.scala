@@ -32,8 +32,8 @@ object Util {
   /**
    * Splits a [[JList]] into partitions and returns one partition.
    * <p>
-   *   List(1,2,3,4) with two partitions will be turned into
-   *   List(1,3) and List(2,4).
+   * List(1,2,3,4) with two partitions will be turned into
+   * List(1,3) and List(2,4).
    *
    * @param input list to split.
    * @param index index of the returned partition.
@@ -131,3 +131,4 @@ object Util {
   }
 
 }
+

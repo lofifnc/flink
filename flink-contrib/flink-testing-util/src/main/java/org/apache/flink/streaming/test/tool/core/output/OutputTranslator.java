@@ -18,7 +18,7 @@
 package org.apache.flink.streaming.test.tool.core.output;
 
 import org.apache.flink.streaming.test.tool.output.OutputVerifier;
-import org.scalatest.exceptions.TestFailedException;
+import org.apache.flink.streaming.test.tool.runtime.StreamTestFailedException;
 
 public abstract class OutputTranslator<IN,OUT> implements OutputVerifier<IN> {
 
@@ -36,12 +36,12 @@ public abstract class OutputTranslator<IN,OUT> implements OutputVerifier<IN> {
 	}
 
 	@Override
-	public void receive(IN elem) throws TestFailedException {
-		verifier.receive(translate(elem));
+	public void receive(IN record) throws StreamTestFailedException {
+		verifier.receive(translate(record));
 	}
 
 	@Override
-	public void finish() throws TestFailedException {
+	public void finish() throws StreamTestFailedException {
 		verifier.finish();
 	}
 }
