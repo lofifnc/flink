@@ -35,7 +35,7 @@ public class Sugar {
 		return Before.period(span, unit);
 	}
 
-	public static <T> EventTimeInputBuilder<T> fromInput(T elem) {
+	public static <T> EventTimeInputBuilder<T> startWith(T elem) {
 		return EventTimeInputBuilder.create(elem);
 	}
 

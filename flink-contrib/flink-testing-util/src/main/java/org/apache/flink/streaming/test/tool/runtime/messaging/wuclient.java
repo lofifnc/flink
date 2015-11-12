@@ -87,31 +87,24 @@ public class wuclient {
 				switch (type) {
 					case START:
 						String msg = new String(bytes);
-						System.out.println(msg);
 						String[] values = msg.split(" ");
 						participatingSinks.add(Integer.parseInt(values[1]));
 						parallelism = Integer.parseInt(values[2]);
-						System.out.println("parallelism = " + parallelism);
 						break;
 					case SER:
 						if(serializer == null) {
 							serializer = new String(ArrayUtils.subarray(bytes, type.lenght, bytes.length));
-							System.out.println("serializer = " + serializer);
 						}
 						break;
 					case ELEM:
 						String elem = new String(ArrayUtils.subarray(bytes, type.lenght, bytes.length));
-						System.out.println("elem = " + elem);
 						break;
 					case END:
 						msg = new String(bytes);
-						System.out.println(msg);
 						int sinkIndex = Integer.parseInt(msg.split(" ")[1]);
 						finishedSinks.add(sinkIndex);
 						break;
 				}
-				System.out.println("all started? " + (participatingSinks.size() == parallelism));
-				System.out.println("all finished?" + (finishedSinks.size() == parallelism));
 			}
 		}
 

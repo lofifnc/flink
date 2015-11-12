@@ -29,9 +29,21 @@ import scala.util.Try
 
 object Util {
 
-  def splitList[T](input: JList[T], num: Int, numPartitions: Int): JList[T] = {
+  /**
+   * Splits a [[JList]] into partitions and returns one partition.
+   * <p>
+   *   List(1,2,3,4) with two partitions will be turned into
+   *   List(1,3) and List(2,4).
+   *
+   * @param input list to split.
+   * @param index index of the returned partition.
+   * @param numPartitions number of partitions.
+   * @tparam T type of the list.
+   * @return part of the list.
+   */
+  def splitList[T](input: JList[T], index: Int, numPartitions: Int): JList[T] = {
     val split: ArrayBuffer[T] = ArrayBuffer.empty[T]
-    var i: Int = num
+    var i: Int = index
     while (i < input.size) {
       split.add(input.get(i))
       i += numPartitions
@@ -39,18 +51,51 @@ object Util {
     split
   }
 
+  /**
+   * Calculates the watermarks for a list of input [[StreamRecord]]s.
+   * <p>
+   * Produces a list of longs with the same length as the input list,
+   * defining for each record if a watermark with what value can be emitted.
+   * If a long is negative no watermark can be emitted at this point.
+   *
+   * e.g.: A input with timestamps: (3, 1, 11, 2, 5, 4, 10, 8, 7, 9)
+   * will return List(-1,1,-1,3,-1,5,-1,-1,8,11)
+   *
+   * @param records list of [[StreamRecord]]s
+   * @tparam T type of the values
+   * @return list of watermarks
+   */
   def calculateWatermarks[T](records: java.lang.Iterable[StreamRecord[T]]): JList[JLong] = {
     val timestamps = records.map(_.getTimestamp)
     if (timestamps.size != records.size) {
       throw new IOException("The list of watermarks has not the same length as the output")
     }
-    insertWatermarks(timestamps.toList)
+    produceWatermarks(timestamps.toList)
   }
 
+  /**
+   * Implicit conversion from a[[List]]] of [[Long]]
+   * to a  [[JList]] of [[JLong]]
+   * @param lst
+   * @return
+   */
   implicit def toLongList(lst: List[Long]): JList[JLong] =
     seqAsJavaList(lst.map(i => i: java.lang.Long))
 
-  def insertWatermarks(timestamps: List[Long]): List[Long] = {
+  /**
+   * Calculates the watermarks for a list of [[Long]].
+   * <p>
+   * Produces a list of longs with the same length as the input list,
+   * defining for each record if a watermark with what value can be emitted.
+   * If a long is negative no watermark can be emitted at this point.
+   *
+   * e.g.: A input with timestamps: (3, 1, 11, 2, 5, 4, 10, 8, 7, 9)
+   * will return List(-1,1,-1,3,-1,5,-1,-1,8,11)
+   *
+   * @param timestamps list of [[Long]]
+   * @return list of watermarks
+   */
+  def produceWatermarks(timestamps: List[Long]): List[Long] = {
     val max = timestamps.max
     val array = new ArrayBuffer[Long]()
     val seen = new ArrayBuffer[Long]()
@@ -59,6 +104,7 @@ object Util {
       if (l.isEmpty) {
         return l
       }
+      //TODO refactor recursion
       val ts = l.head
       if (l.count(ts >= _) == 1) {
         val watermark =

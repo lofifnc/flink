@@ -26,34 +26,25 @@ import org.apache.flink.streaming.test.tool.output.OutputVerifier;
 import org.apache.flink.streaming.test.tool.output.TestSink;
 import org.apache.flink.streaming.test.tool.output.assertion.HamcrestVerifier;
 import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
-import org.apache.flink.streaming.test.tool.runtime.OutputHandler;
-import org.apache.flink.streaming.test.tool.runtime.TestingStreamEnvironment;
+import org.apache.flink.streaming.test.tool.runtime.StreamTestEnvironment;
 import org.junit.After;
 import org.junit.Before;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
 /**
  * Offers a base for testing flink streaming applications
- * To use this extend your UnitTest class with this class.
+ * To use, extend your UnitTest class with this class.
  */
 public class StreamTest {
 
-	/** stream environment */
-	private TestingStreamEnvironment env;
-	/** list of registered handlers to receive the output */
-	private List<OutputHandler> handler;
-	/** the current port used for transmitting the output via zeroMQ */
-	private Integer currentPort;
+	/**
+	 * stream environment
+	 */
+	private StreamTestEnvironment env;
 
 	@Before
 	public void initialize() throws Exception {
-		env = TestingStreamEnvironment.createTestEnvironment(2);
+		env = StreamTestEnvironment.createTestEnvironment(2);
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
-		handler = new ArrayList<>();
-		currentPort = 5555;
 	}
 
 	/**
@@ -80,20 +71,6 @@ public class StreamTest {
 	}
 
 	/**
-	 * Creates a TestSink to verify your job output.
-	 *
-	 * @param verifier which will be used to verify the received records
-	 * @param <IN>     type of the input
-	 * @return the created sink.
-	 */
-	public <IN> TestSink<IN> createTestSink(OutputVerifier<IN> verifier) {
-		handler.add(new OutputHandler<IN>(currentPort, verifier));
-		TestSink<IN> sink = new TestSink<IN>(currentPort);
-		currentPort++;
-		return sink;
-	}
-
-	/**
 	 * Creates a TestSink using {@link org.hamcrest.Matcher} to verify the output.
 	 *
 	 * @param matcher of type Iterable<IN>
@@ -102,7 +79,7 @@ public class StreamTest {
 	 */
 	public <IN> TestSink<IN> createTestSink(org.hamcrest.Matcher<Iterable<IN>> matcher) {
 		OutputVerifier<IN> verifier = new HamcrestVerifier<>(matcher);
-		return createTestSink(verifier);
+		return env.createTestSink(verifier);
 	}
 
 	public <T> void assertStream(DataStream<T> stream, OutputMatcher<T> matcher) {
@@ -118,16 +95,16 @@ public class StreamTest {
 	 */
 	@After
 	public void executeTest() throws Throwable {
-
-		env.execute();
-		for (OutputHandler v : handler) {
-			try {
-				v.getTestResult();
-			} catch (ExecutionException e) {
-				throw e.getCause();
+		try{
+			env.executeTest();
+		}catch(AssertionError assertionError){
+			if(env.hasBeenStopped()) {
+				//the execution has been forcefully stopped inform the user!
+				throw new AssertionError("Test terminated due timeout!" +
+						assertionError.getMessage());
 			}
+			throw assertionError;
 		}
-
 	}
 
 }

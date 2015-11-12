@@ -105,7 +105,7 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * Repeats the last element
 	 * @param times    number of times the input ist will be repeated
 	 */
-	public EventTimeInputBuilder<T> repeatablyEmit(T elem,TimeSpan timeBetween, int times) {
+	public EventTimeInputBuilder<T> emit(T elem, TimeSpan timeBetween, int times) {
 		long ts = input.get(input.size() - 1).getTimestamp();
 		for (int i = 0; i < times; i++) {
 			ts = ts + timeBetween.getTimeSpan();
@@ -120,7 +120,7 @@ public class EventTimeInputBuilder<T> implements EventTimeInput<T> {
 	 * @param timeSpan defining the time before and between repeating
 	 * @param times    number of times the input ist will be repeated
 	 */
-	public EventTimeInputBuilder<T> repeatInput(TimeSpan timeSpan, int times) {
+	public EventTimeInputBuilder<T> repeatAll(TimeSpan timeSpan, int times) {
 		long start = input.get(input.size() - 1).getTimestamp();
 		List<StreamRecord<T>> toAppend = new ArrayList<>();
 		for (int i = 0; i < times; i++) {

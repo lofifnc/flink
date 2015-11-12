@@ -37,7 +37,7 @@ class EventTimeInputBuilderSpec extends CoreSpec {
 
   "the builder" should "repeat a input list one times" in
     new EventTimeInputBuilderCase {
-      builder.repeatInput(After.period(2, TimeUnit.SECONDS), 1)
+      builder.repeatAll(After.period(2, TimeUnit.SECONDS), 1)
       builder.getInput.toList shouldBe List(
         new StreamRecord[Integer](1, 0),
         new StreamRecord[Integer](2, 2000),
@@ -52,7 +52,7 @@ class EventTimeInputBuilderSpec extends CoreSpec {
 
   "the builder" should "repeat a input list two times" in
     new EventTimeInputBuilderCase {
-      builder.repeatInput(After.period(2, TimeUnit.SECONDS), 2)
+      builder.repeatAll(After.period(2, TimeUnit.SECONDS), 2)
       builder.getInput.toList shouldBe List(
         new StreamRecord[Integer](1, 0),
         new StreamRecord[Integer](2, 2000),
@@ -71,7 +71,7 @@ class EventTimeInputBuilderSpec extends CoreSpec {
 
   "the builder" should "repeat an element two times" in {
     val builder = EventTimeInputBuilder.create(1)
-      .repeatablyEmit(2,After.period(1,TimeUnit.SECONDS),4)
+      .emit(2,After.period(1,TimeUnit.SECONDS),4)
 
     builder.getInput.toList shouldBe List(
       new StreamRecord[Integer](1, 0),

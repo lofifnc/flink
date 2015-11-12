@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.runtime.StreamingMode;
+import org.apache.flink.runtime.client.JobTimeoutException;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.functions.source.FromElementsFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
@@ -29,21 +30,70 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.test.tool.input.EventTimeInput;
 import org.apache.flink.streaming.test.tool.input.Input;
 import org.apache.flink.streaming.test.tool.input.ParallelFromStreamRecordsFunction;
+import org.apache.flink.streaming.test.tool.output.OutputVerifier;
+import org.apache.flink.streaming.test.tool.output.TestSink;
 import org.apache.flink.streaming.util.TestStreamEnvironment;
 import org.apache.flink.test.util.ForkableFlinkMiniCluster;
 import org.apache.flink.test.util.TestBaseUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
 
-public class TestingStreamEnvironment extends TestStreamEnvironment {
+public class StreamTestEnvironment extends TestStreamEnvironment {
 
-	public TestingStreamEnvironment(ForkableFlinkMiniCluster cluster, int parallelism) {
-		super(cluster,parallelism);
+	private final ForkableFlinkMiniCluster cluster;
+
+	/**
+	 * list of registered handlers to receive the output
+	 */
+	private List<OutputHandler> handler;
+
+	/**
+	 * Flag indicating whether the env has been shutdown forcefully
+	 */
+	private Boolean stopped = false;
+
+	/**
+	 * time in milliseconds before the test gets stopped with a timeout
+	 */
+	private long timeout = 5000;
+
+	/**
+	 * Task to timeout the test execution
+	 */
+	private TimerTask stopExecution;
+
+	/**
+	 * the current port used for transmitting the output via zeroMQ
+	 */
+	private Integer currentPort;
+
+	public StreamTestEnvironment(ForkableFlinkMiniCluster cluster, int parallelism) {
+		super(cluster, parallelism);
+		this.cluster = cluster;
+		handler = new ArrayList<>();
+		currentPort = 5555;
+		stopExecution = new TimerTask() {
+			public void run() {
+				stopExecution();
+			}
+		};
 	}
 
-	public static TestingStreamEnvironment createTestEnvironment(int parallelism) throws Exception {
+	/**
+	 * Factory method to create a new instance using a provided {@link ForkableFlinkMiniCluster}
+	 *
+	 * @param parallelism
+	 * @return
+	 * @throws Exception
+	 */
+	public static StreamTestEnvironment createTestEnvironment(int parallelism) throws Exception {
 		ForkableFlinkMiniCluster cluster =
 				TestBaseUtils.startCluster(
 						1,
@@ -53,7 +103,54 @@ public class TestingStreamEnvironment extends TestStreamEnvironment {
 						false,
 						true
 				);
-		return new TestingStreamEnvironment(cluster,1);
+		return new StreamTestEnvironment(cluster, 1);
+	}
+
+	/**
+	 * Stop the execution of the test.
+	 */
+	public void stopExecution() {
+		stopped = true;
+		cluster.shutdown();
+	}
+
+	/**
+	 * Starts the test execution. And collects the results.
+	 *
+	 * @throws Throwable any Exception that has occurred
+	 *                   during validation the test.
+	 */
+	public void executeTest() throws Throwable {
+		Timer stopTimer = new Timer();
+		stopTimer.schedule(stopExecution, timeout);
+		try {
+			super.execute();
+		} catch (JobTimeoutException e) {
+			//cluster has been shutdown forcefully
+			//most likely by at timeout.
+			stopped = true;
+		}
+		try {
+			for (OutputHandler v : handler) {
+				v.getTestResult();
+			}
+		} catch (ExecutionException e) {
+			throw e.getCause();
+		}
+	}
+
+	/**
+	 * Creates a TestSink to verify your job output.
+	 *
+	 * @param verifier which will be used to verify the received records
+	 * @param <IN>     type of the input
+	 * @return the created sink.
+	 */
+	public <IN> TestSink<IN> createTestSink(OutputVerifier<IN> verifier) {
+		handler.add(new OutputHandler<IN>(currentPort, verifier));
+		TestSink<IN> sink = new TestSink<IN>(currentPort);
+		currentPort++;
+		return sink;
 	}
 
 	/**
@@ -77,7 +174,6 @@ public class TestingStreamEnvironment extends TestStreamEnvironment {
 			throw new IllegalArgumentException("fromElements needs at least one element as argument");
 		}
 
-
 		TypeInformation<OUT> typeInfo;
 		try {
 			typeInfo = TypeExtractor.getForObject(data[0].getValue());
@@ -89,11 +185,11 @@ public class TestingStreamEnvironment extends TestStreamEnvironment {
 		return fromCollectionWithTimestamp(Arrays.asList(data), typeInfo);
 	}
 
-	public <OUT> DataStreamSource<OUT> fromInput(EventTimeInput<OUT> input){
+	public <OUT> DataStreamSource<OUT> fromInput(EventTimeInput<OUT> input) {
 		return fromCollectionWithTimestamp(input.getInput());
 	}
 
-	public <OUT> DataStreamSource<OUT> fromInput(Input<OUT> input){
+	public <OUT> DataStreamSource<OUT> fromInput(Input<OUT> input) {
 		return fromCollection(input.getInput());
 	}
 
@@ -146,7 +242,7 @@ public class TestingStreamEnvironment extends TestStreamEnvironment {
 	 * @return The data stream representing the given collection
 	 */
 	public <OUT> DataStreamSource<OUT> fromCollectionWithTimestamp(Collection<StreamRecord<OUT>> data,
-																TypeInformation<OUT> outType) {
+																   TypeInformation<OUT> outType) {
 		Preconditions.checkNotNull(data, "Collection must not be null");
 
 		TypeInformation<StreamRecord<OUT>> typeInfo;
@@ -169,6 +265,34 @@ public class TestingStreamEnvironment extends TestStreamEnvironment {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 		return addSource(function, "Collection Source", outType).setParallelism(1);
+	}
+
+	/**
+	 * This method can be used to check if the environment has been
+	 * stopped prematurely by e.g. a timeout.
+	 *
+	 * @return true if has been stopped forcefully.
+	 */
+	public Boolean hasBeenStopped() {
+		return stopped;
+	}
+
+	/**
+	 * Getter for the timeout interval
+	 * after the test execution gets stopped.
+	 * @return timeout in milliseconds
+	 */
+	public Long getTimeoutInterval() {
+		return timeout;
+	}
+
+	/**
+	 * Setter for the timeout interval
+	 * after the test execution gets stopped.
+	 * @param interval
+	 */
+	public void setTimeoutInterval(long interval) {
+		timeout = interval;
 	}
 
 //    /**

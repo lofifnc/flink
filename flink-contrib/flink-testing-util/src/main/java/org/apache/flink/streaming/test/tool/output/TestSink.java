@@ -96,7 +96,6 @@ public class TestSink<IN> extends RichSinkFunction<IN> {
 				return;
 			}
 		}
-		System.out.println("out " + indexofThisSubTask + " " + next);
 
 		/*
 		serialize output and send

@@ -34,7 +34,7 @@ import java.util.concurrent.FutureTask;
 public class OutputHandler<OUT> {
 
 	private ExecutorService executorService = Executors.newSingleThreadExecutor();
-	private FutureTask<ArrayList<OUT>> outputFuture;
+	private FutureTask<Boolean> outputFuture;
 //	private OutputVerifier<OUT> verifier;
 
 	/**
@@ -46,13 +46,22 @@ public class OutputHandler<OUT> {
 	}
 
 
-	private FutureTask<ArrayList<OUT>> startListening(int port, OutputVerifier<OUT> verifier) {
-		FutureTask<ArrayList<OUT>> future =
-				new FutureTask<ArrayList<OUT>>(new OutputListener<OUT>(port,verifier));
+	private FutureTask<Boolean> startListening(int port, OutputVerifier<OUT> verifier) {
+		FutureTask<Boolean> future =
+				new FutureTask<Boolean>(new OutputListener<OUT>(port,verifier));
 
-		//listen for org.apache.flink.streaming.test.output.org.apache.flink.streaming.test.output
+		//listen for output
 		executorService.execute(future);
 		return future;
+	}
+
+	/**
+	 * Stop the test process.
+	 * The running verifiers will be finished,
+	 * with the current state of the test execution.
+	 */
+	public void stop() {
+		outputFuture.cancel(true);
 	}
 
 	/**
@@ -61,7 +70,7 @@ public class OutputHandler<OUT> {
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
-	public ArrayList<OUT> getTestResult() throws ExecutionException, InterruptedException {
+	public Boolean getTestResult() throws ExecutionException, InterruptedException {
 		return outputFuture.get();
 	}
 

@@ -35,7 +35,7 @@ import java.util.concurrent.Callable;
  *
  * @param <OUT> input type of the sink
  */
-public class OutputListener<OUT> implements Callable<ArrayList<OUT>> {
+public class OutputListener<OUT> implements Callable<Boolean> {
 
 	private final int port;
 	private final OutputVerifier<OUT> verifier;
@@ -49,17 +49,28 @@ public class OutputListener<OUT> implements Callable<ArrayList<OUT>> {
 		this.verifier = verifier;
 	}
 
-	public ArrayList<OUT> call() throws IOException, TestFailedException {
-		ArrayList<byte[]> byteArray = new ArrayList<byte[]>();
+
+	public Boolean call() throws TestFailedException {
 		ZMQ.Context context = ZMQ.context(1);
 		// socket to receive from sink
 		ZMQ.Socket subscriber = context.socket(ZMQ.PULL);
 		subscriber.bind("tcp://*:" + port);
 
 		// receive output from sink until finished all sinks are finished
-		boolean isFinished = processMessage(subscriber.recv());
-		while (!isFinished) {
-			isFinished = processMessage(subscriber.recv());
+		try {
+			boolean isFinished = processMessage(subscriber.recv());
+			while (!isFinished) {
+				isFinished = processMessage(subscriber.recv());
+				//check if test is stopped
+				if (Thread.currentThread().isInterrupted()) {
+					break;
+				}
+			}
+		}catch (IOException e) {
+			subscriber.close();
+			context.close();
+			verifier.finish();
+			return false;
 		}
 		// close the connection
 		subscriber.close();
@@ -67,10 +78,11 @@ public class OutputListener<OUT> implements Callable<ArrayList<OUT>> {
 		verifier.finish();
 		ArrayList<OUT> sinkInput = new ArrayList<>();
 		// deserialize messages received from sink
-		for (byte[] b : byteArray) {
-			sinkInput.add(SerializeUtil.deserialize(b, typeSerializer));
-		}
-		return sinkInput;
+		return true;
+	}
+
+	private void stop() {
+
 	}
 
 	private Boolean processMessage(byte[] bytes) throws IOException {
@@ -81,7 +93,7 @@ public class OutputListener<OUT> implements Callable<ArrayList<OUT>> {
 
 		switch (type) {
 			case START:
-				if(participatingSinks.isEmpty()) {
+				if (participatingSinks.isEmpty()) {
 					verifier.init();
 				}
 				msg = new String(bytes);
@@ -91,14 +103,14 @@ public class OutputListener<OUT> implements Callable<ArrayList<OUT>> {
 
 				break;
 			case SER:
-				if(typeSerializer == null) {
+				if (typeSerializer == null) {
 					out = type.getPayload(bytes);
 					typeSerializer = SerializeUtil.deserialize(out);
 				}
 				break;
 			case ELEM:
 				out = type.getPayload(bytes);
-				OUT elem = SerializeUtil.deserialize(out,typeSerializer);
+				OUT elem = SerializeUtil.deserialize(out, typeSerializer);
 				verifier.receive(elem);
 				break;
 			case END:
@@ -107,8 +119,8 @@ public class OutputListener<OUT> implements Callable<ArrayList<OUT>> {
 				finishedSinks.add(sinkIndex);
 				break;
 		}
-		if(finishedSinks.size() == parallelism) {
-			if(participatingSinks.size() != parallelism) {
+		if (finishedSinks.size() >= parallelism) {
+			if (participatingSinks.size() != parallelism) {
 				throw new IOException("not all parallel sinks have been initialized");
 			}
 			return true;

@@ -27,10 +27,11 @@ import org.apache.flink.streaming.test.tool.output.assertion.AssertBlock;
 import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
 
 import static org.apache.flink.streaming.test.tool.core.Sugar.after;
-import static org.apache.flink.streaming.test.tool.core.Sugar.fromInput;
+import static org.apache.flink.streaming.test.tool.core.Sugar.startWith;
 import static org.apache.flink.streaming.test.tool.core.Sugar.seconds;
 import static org.apache.flink.streaming.test.tool.core.Sugar.times;
 import static org.hamcrest.Matchers.either;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 
 public class Test extends StreamTest {
@@ -54,25 +55,26 @@ public class Test extends StreamTest {
 	@org.junit.Test
 	public void testWindowing() throws Exception {
 
-		TupleMask<Tuple2<Integer,String>> mask = TupleMask.create("value","name");
+//		TupleMask<Tuple2<Integer,String>> mask = TupleMask.create("value","name");
 
 		setParallelism(2);
 
 		//------- input definition
 		DataStream<Tuple2<Integer, String>> testStream = createTestStream(
-				fromInput(Tuple2.of(1, "test"))
-						.emit(Tuple2.of(2, "boo"), after(10, seconds))
-						.repeatablyEmit(Tuple2.of(3, "bar"), after(20, seconds), times(10))
-						.repeatInput(after(10, seconds), times(1))
+				startWith(Tuple2.of(1, "fritz"))
+						.emit(Tuple2.of(2, "hans"), after(10, seconds))
+						.emit(Tuple2.of(3, "peter"), after(20, seconds), times(10))
+						.repeatAll(after(10, seconds), times(1))
 		);
 
 		//------- output definition
 		OutputMatcher<Tuple2<Integer, String>> matcher =
-				AssertBlock.fromMask(mask)
-						.assertThat("value", is(3))
-						.assertThat("name", either(is("test")).or(is("bar")))
+				new AssertBlock<Tuple2<Integer,String>>("value","name")
+						.assertThat("value", greaterThan(2))
+						.assertThat("name", either(is("fritz")).or(is("peter")))
 						.anyOfThem().onEachRecord();
 
+		//------- test execution
 		assertStream(window(testStream), matcher);
 	}
 
@@ -83,7 +85,7 @@ public class Test extends StreamTest {
 
 		//-------------- input
 		DataStream<Tuple2<Integer, String>> stream = createTestStream(
-				fromInput(Tuple2.of(1, "test"))
+				startWith(Tuple2.of(1, "test"))
 						.emit(Tuple2.of(2, "foo"), after(10, seconds))
 						.emit(Tuple2.of(3, "bar"), after(10, seconds))
 		);
@@ -93,6 +95,7 @@ public class Test extends StreamTest {
 				.expect(Tuple2.of("test", 1))
 				.expect(Tuple2.of("foo", 2));
 
+		//-------- test execution
 		assertStream(swap(stream), expectedOutput);
 
 	}
