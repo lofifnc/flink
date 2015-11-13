@@ -22,7 +22,7 @@ import java.util.{List => JList}
 
 import org.apache.flink.streaming.runtime.streamrecord
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord
-import org.apache.flink.streaming.test.tool.input.{EventTimeInput, Input}
+import org.apache.flink.streaming.test.tool.runtime.input.{EventTimeInput, Input}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers, OptionValues}
 

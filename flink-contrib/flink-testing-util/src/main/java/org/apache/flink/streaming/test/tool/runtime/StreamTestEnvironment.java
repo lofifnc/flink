@@ -17,7 +17,6 @@
 
 package org.apache.flink.streaming.test.tool.runtime;
 
-
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -32,11 +31,11 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.functions.source.FromElementsFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
-import org.apache.flink.streaming.test.tool.input.EventTimeInput;
-import org.apache.flink.streaming.test.tool.input.Input;
-import org.apache.flink.streaming.test.tool.input.ParallelFromStreamRecordsFunction;
-import org.apache.flink.streaming.test.tool.output.OutputVerifier;
-import org.apache.flink.streaming.test.tool.output.TestSink;
+import org.apache.flink.streaming.test.tool.runtime.input.EventTimeInput;
+import org.apache.flink.streaming.test.tool.runtime.input.Input;
+import org.apache.flink.streaming.test.tool.runtime.input.ParallelFromStreamRecordsFunction;
+import org.apache.flink.streaming.test.tool.runtime.output.OutputVerifier;
+import org.apache.flink.streaming.test.tool.runtime.output.TestSink;
 import org.apache.flink.streaming.test.tool.runtime.messaging.OutputListener;
 import org.apache.flink.streaming.util.TestStreamEnvironment;
 import org.apache.flink.test.util.ForkableFlinkMiniCluster;
@@ -56,36 +55,47 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class StreamTestEnvironment extends TestStreamEnvironment {
 
+	/**
+	 * {@link ForkableFlinkMiniCluster} used for running the test.
+	 */
 	private final ForkableFlinkMiniCluster cluster;
 
+	/**
+	 * {@link ListeningExecutorService} used for running the {@link OutputListener},
+	 * in the background.
+	 */
 	private final ListeningExecutorService executorService;
 
+	/**
+	 * list of {@link ListenableFuture}s wrapping the {@link OutputListener}s.
+	 */
 	private final List<ListenableFuture<Boolean>> listeners = new ArrayList<>();
 
-	//TODO CountdownLatch
-	//TODO ThreadSafe
+	/**
+	 * Number of running listeners
+	 */
+	private final AtomicInteger runningListeners;
 
 	/**
-	 * Flag indicating whether the env has been shutdown forcefully
+	 * Flag indicating whether the env has been shutdown forcefully.
 	 */
 	private final AtomicBoolean stopped = new AtomicBoolean(false);
 
 	/**
-	 * Time in milliseconds before the test gets stopped with a timeout
+	 * Time in milliseconds before the test gets stopped with a timeout.
 	 */
 	private long timeout = 2000;
 
 	/**
-	 * Task to timeout the test execution
+	 * {@link TimerTask} to stop the test execution.
 	 */
 	private TimerTask stopExecution;
 
 	/**
-	 * The current port used for transmitting the output via zeroMQ
+	 * The current port used for transmitting the output from {@link TestSink} via 0MQ
+	 * to the {@link OutputListener}s.
 	 */
 	private Integer currentPort;
-
-	private final AtomicInteger runningListeners;
 
 	public StreamTestEnvironment(ForkableFlinkMiniCluster cluster, int parallelism) {
 		super(cluster, parallelism);
@@ -129,7 +139,7 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 	 * Thus terminating the execution gracefully.
 	 */
 	public synchronized void stopExecution() {
-		if(stopped.get()) {
+		if (stopped.get()) {
 			return;
 		}
 		stopped.set(true);
@@ -166,20 +176,39 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 					//unwrap exception
 					throw e.getCause().getCause();
 				}
+				throw e.getCause();
 			}
 		}
 	}
 
 	/**
-	 * Creates a TestSink to verify your job output.
+	 * Creates a TestSink to verify your the output of your stream.
+	 * Using a {@link OutputVerifier}
+	 *
+	 * @param verifier {@link OutputVerifier} which will be
+	 *                 used to verify the received records.
+	 * @param <IN>     type of the input
+	 * @return the created sink.
+	 */
+	public <IN> TestSink<IN> createTestSink(OutputVerifier<IN> verifier) {
+		VerifyFinishedTrigger trigger = new DefaultTestTrigger();
+		registerListener(currentPort, verifier, trigger);
+		TestSink<IN> sink = new TestSink<IN>(currentPort);
+		currentPort++;
+		return sink;
+	}
+
+	/**
+	 * Creates a TestSink to verify the output of your stream.
 	 * The environment will register a port
 	 *
 	 * @param verifier which will be used to verify the received records
 	 * @param <IN>     type of the input
 	 * @return the created sink.
 	 */
-	public <IN> TestSink<IN> createTestSink(OutputVerifier<IN> verifier) {
-		registerVerifier(currentPort, verifier);
+	public <IN> TestSink<IN> createTestSink(OutputVerifier<IN> verifier,
+											VerifyFinishedTrigger trigger) {
+		registerListener(currentPort, verifier, trigger);
 		TestSink<IN> sink = new TestSink<IN>(currentPort);
 		currentPort++;
 		return sink;
@@ -332,21 +361,24 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 	/**
 	 * Registers a verifier for a 0MQ port.
 	 *
-	 * @param port to listen on.
-	 * @param verifier verifier
 	 * @param <OUT>
+	 * @param port     to listen on.
+	 * @param verifier verifier
+	 * @param trigger
 	 */
-	private <OUT> void registerVerifier(int port, OutputVerifier<OUT> verifier) {
+	private <OUT> void registerListener(int port,
+										OutputVerifier<OUT> verifier,
+										VerifyFinishedTrigger trigger) {
 		ListenableFuture<Boolean> future = executorService
-				.submit(new OutputListener<OUT>(port, verifier,100));
+				.submit(new OutputListener<OUT>(port, verifier, trigger));
 		runningListeners.incrementAndGet();
 		listeners.add(future);
 
 		Futures.addCallback(future, new FutureCallback<Boolean>() {
 			@Override
 			public void onSuccess(Boolean continueExecution) {
-				if(!continueExecution) {
-					if(runningListeners.decrementAndGet() == 0) {
+				if (!continueExecution) {
+					if (runningListeners.decrementAndGet() == 0) {
 						stopExecution();
 					}
 				}
@@ -359,26 +391,4 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 		});
 	}
 
-//    /**
-//     * Creates a data stream from the given iterator.
-//     *
-//     * <p>Because the iterator will remain unmodified until the actual execution happens,
-//     * the type of data returned by the iterator must be given explicitly in the form of the type
-//     * class (this is due to the fact that the Java compiler erases the generic type information).</p>
-//     *
-//     * <p>Note that this operation will result in a non-parallel data stream source, i.e.,
-//     * a data stream source with a parallelism of one.</p>
-//     *
-//     * @param data
-//     * 		The iterator of elements to create the data stream from
-//     * @param type
-//     * 		The class of the data produced by the iterator. Must not be a generic class.
-//     * @param <OUT>
-//     * 		The type of the returned data stream
-//     * @return The data stream representing the elements in the iterator
-//     * @see #fromCollection(java.org.apache.flink.streaming.util.Iterator, org.apache.flink.org.apache.flink.streaming.api.common.typeinfo.TypeInformation)
-//     */
-//    public <OUT> DataStreamSource<OUT> fromCollection(Iterator<StreamRecord<OUT>> data, Class<StreamRecord<OUT>> type) {
-//        return fromCollectionWithTimestamp(data, TypeExtractor.getForClass(type));
-//    }
 }

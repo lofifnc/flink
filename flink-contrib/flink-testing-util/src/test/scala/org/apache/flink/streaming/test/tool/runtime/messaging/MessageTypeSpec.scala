@@ -24,16 +24,16 @@ class MessageTypeSpec extends CoreSpec {
 
   "getMessageType" should "classify messages" in {
     MessageType
-      .getMessageType("START 1 2".getBytes) shouldBe START
+      .getMessageType("OPEN 1 2".getBytes) shouldBe OPEN
 
     MessageType
       .getMessageType("SERfoobar".getBytes) shouldBe SER
 
     MessageType
-      .getMessageType("ELEMMarostn".getBytes) shouldBe ELEM
+      .getMessageType("RECMarostn".getBytes) shouldBe REC
 
     MessageType
-      .getMessageType("END 1".getBytes) shouldBe END
+      .getMessageType("CLOSE 1".getBytes) shouldBe CLOSE
 
     intercept[UnsupportedOperationException] {
     MessageType
@@ -41,8 +41,8 @@ class MessageTypeSpec extends CoreSpec {
     }
   }
 
-  "getPayload" should "return the payload of a ELEM message" in {
-    val payload = ELEM.getPayload("ELEMblabla".getBytes)
+  "getPayload" should "return the payload of a REC message" in {
+    val payload = REC.getPayload("RECblabla".getBytes)
     new String(payload) shouldBe "blabla"
   }
 
@@ -53,7 +53,7 @@ class MessageTypeSpec extends CoreSpec {
 
   "isType" should "should match the type of a message" in {
     MessageType.isType("SERblabla".getBytes,SER) shouldBe true
-    MessageType.isType("SERblabla".getBytes,START) shouldBe false
+    MessageType.isType("SERblabla".getBytes,OPEN) shouldBe false
   }
 
 

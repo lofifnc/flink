@@ -16,37 +16,43 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.core;
+package org.apache.flink.streaming.test.tool.core.assertion.result;
 
+import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
+
 /**
- * Data structure mapping a {@link String} key to a {@link Matcher}.
- * <p>
- * Used for defining matchers that work on {@link TupleMap}.
+ * Provides a {@link Matcher} that is successful if each of
+ * the items in the examined {@link Iterable} is a positive match.
+ * @param <T>
  */
-public class KeyMatcherPair {
-
-	public final String key;
-
-	public final Matcher matcher;
-
-	public KeyMatcherPair(String key, Matcher matcher) {
-		this.matcher = matcher;
-		this.key = key;
-	}
+public class EachOf<T> extends UntilRecord<T> {
 
 	/**
-	 * Factory method.
-	 * @param key string key.
-	 * @param matcher {@link Matcher}.
-	 * @return new instance of this class.
+	 * Default Constructor
+	 * @param matcher to apply to {@link Iterable}.
 	 */
-	public static KeyMatcherPair of(
-			String key,
-			Matcher matcher
-	) {
-		return new KeyMatcherPair(key, matcher);
+	public EachOf(Matcher<T> matcher) {
+		super(matcher);
 	}
 
+	@Override
+	protected Description describeCondition(Description description) {
+		return description.appendText("<all>");
+	}
+
+	@Override
+	public boolean validWhen(int matches, int possibleMatches) {
+		return matches == possibleMatches;
+	}
+
+	@Override
+	public String prefix() {
+		return "each of ";
+	}
+
+	public static <T> EachOf<T> each(Matcher<T> matcher) {
+		return new EachOf<>(matcher);
+	}
 }

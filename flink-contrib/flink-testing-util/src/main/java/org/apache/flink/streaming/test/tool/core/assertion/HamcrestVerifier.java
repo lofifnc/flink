@@ -16,37 +16,29 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.core;
+package org.apache.flink.streaming.test.tool.core.assertion;
 
+import org.apache.flink.streaming.test.tool.runtime.output.SimpleOutputVerifier;
+import org.apache.flink.streaming.test.tool.runtime.StreamTestFailedException;
 import org.hamcrest.Matcher;
+import org.junit.Assert;
 
-/**
- * Data structure mapping a {@link String} key to a {@link Matcher}.
- * <p>
- * Used for defining matchers that work on {@link TupleMap}.
- */
-public class KeyMatcherPair {
+import java.util.List;
 
-	public final String key;
+public class HamcrestVerifier<T> extends SimpleOutputVerifier<T> {
 
-	public final Matcher matcher;
+	public final Matcher<Iterable<T>> matcher;
 
-	public KeyMatcherPair(String key, Matcher matcher) {
+	public HamcrestVerifier(Matcher<Iterable<T>> matcher) {
 		this.matcher = matcher;
-		this.key = key;
 	}
 
-	/**
-	 * Factory method.
-	 * @param key string key.
-	 * @param matcher {@link Matcher}.
-	 * @return new instance of this class.
-	 */
-	public static KeyMatcherPair of(
-			String key,
-			Matcher matcher
-	) {
-		return new KeyMatcherPair(key, matcher);
+	@Override
+	public void verify(List<T> output) throws StreamTestFailedException {
+		try {
+			Assert.assertThat(output, matcher);
+		} catch (AssertionError e) {
+			throw new StreamTestFailedException("Assertion Failed!",e);
+		}
 	}
-
 }

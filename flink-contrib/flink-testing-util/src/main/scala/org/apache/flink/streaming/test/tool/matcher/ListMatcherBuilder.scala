@@ -42,7 +42,7 @@ class ListMatcherBuilder[T](val right: List[T]) extends TypeSafeDiagnosingMatche
   }
 
   /*
-    END OF CONSTRUCTOR
+    CLOSE OF CONSTRUCTOR
    */
 
   //  def all() : MatcherBuilder[T] = {

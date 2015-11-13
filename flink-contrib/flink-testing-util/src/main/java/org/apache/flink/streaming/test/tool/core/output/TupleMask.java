@@ -21,17 +21,36 @@ package org.apache.flink.streaming.test.tool.core.output;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.streaming.test.tool.core.TupleMap;
 
+
+/**
+ * Defines a mask of string keys applied to a {@link Tuple}.
+ * @param <T>
+ */
 public class TupleMask<T extends Tuple> {
 	private String[] keys;
 
-	public TupleMask(String... cols) {
-		keys = cols;
+	public TupleMask(String... keys) {
+		this.keys = keys;
 	}
 
+	/**
+	 * Converts a {@link Tuple} into a {@link TupleMap}
+	 * using the mask as keys.
+	 *
+	 * @param tuple {@link Tuple} to convert.
+	 * @return {@link TupleMap} with applied keys.
+	 */
 	public TupleMap<T> convert(T tuple) {
 		return new TupleMap<T>(tuple,keys);
 	}
 
+	/**
+	 * Factory method.
+	 *
+	 * @param cols list of Strings.
+	 * @param <T> {@link TupleMask} type.
+	 * @return new instance of this class.
+	 */
 	public static <T extends Tuple> TupleMask<T> create(String... cols){
 		return new TupleMask<>(cols);
 	}

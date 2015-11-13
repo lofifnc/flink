@@ -17,8 +17,8 @@
 
 package org.apache.flink.streaming.test.tool.core.input;
 
-import org.apache.flink.streaming.test.tool.input.FromStreamRecordsFunction;
-import org.apache.flink.streaming.test.tool.input.Input;
+import org.apache.flink.streaming.test.tool.runtime.input.FromStreamRecordsFunction;
+import org.apache.flink.streaming.test.tool.runtime.input.Input;
 
 import java.util.ArrayList;
 import java.util.Collection;

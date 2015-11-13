@@ -18,8 +18,9 @@
 package org.apache.flink.streaming.test.tool.runtime.messaging;
 
 import org.apache.flink.api.common.typeutils.TypeSerializer;
-import org.apache.flink.streaming.test.tool.output.OutputVerifier;
+import org.apache.flink.streaming.test.tool.runtime.output.OutputVerifier;
 import org.apache.flink.streaming.test.tool.runtime.StreamTestFailedException;
+import org.apache.flink.streaming.test.tool.runtime.VerifyFinishedTrigger;
 import org.apache.flink.streaming.test.tool.util.SerializeUtil;
 import org.zeromq.ZMQ;
 
@@ -29,14 +30,15 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
- * Opens a 0MQ context and listens for output coming from a sink.
- * Calls the {@link OutputVerifier} with the output.
+ * Opens a 0MQ context and listens for output coming from a single sink.
+ * This sink can run in parallel with multiple instances.
+ * Feeds the {@link OutputVerifier} with the output.
  *
  * @param <OUT> input type of the sink
  */
 public class OutputListener<OUT> implements Callable<Boolean> {
 
-	/**Port 0MQ listens to.*/
+	/** Port 0MQ listens to.*/
 	private final int port;
 	/** Verifier provided with output */
 	private final OutputVerifier<OUT> verifier;
@@ -45,18 +47,20 @@ public class OutputListener<OUT> implements Callable<Boolean> {
 	/** Set of parallel sink instances that have been started */
 	private final Set<Integer> participatingSinks = new HashSet<>();
 	/** Set of finished parallel sink instances */
-	private final Set<Integer> finishedSinks = new HashSet<>();
+	private final Set<Integer> closedSinks = new HashSet<>();
 	/** Serializer to use for output */
 	TypeSerializer<OUT> typeSerializer = null;
 	/** Number of records received */
 	private int numRecords = 0;
 	/** Maximum of records to receive */
-	private final long maxElements;
+	private final VerifyFinishedTrigger<OUT> trigger;
 
-	public OutputListener(int port, OutputVerifier<OUT> verifier, long maxElements) {
+	public OutputListener(int port,
+						  OutputVerifier<OUT> verifier,
+						  VerifyFinishedTrigger<OUT> trigger) {
 		this.port = port;
 		this.verifier = verifier;
-		this.maxElements = maxElements;
+		this.trigger = trigger;
 	}
 
 
@@ -88,7 +92,7 @@ public class OutputListener<OUT> implements Callable<Boolean> {
 			subscriber.close();
 			context.close();
 			verifier.finish();
-			return true;
+			return false;
 		}
 		// close the connection
 		subscriber.close();
@@ -102,6 +106,15 @@ public class OutputListener<OUT> implements Callable<Boolean> {
 		CONTINUE,ABORT,FINISH
 	}
 
+	/**
+	 * Receives a byte encoded message.
+	 * Determines the type of message, processes it
+	 * and returns the next step.
+	 * @param bytes byte representation of the msg.
+	 * @return {@link Action} the next step.
+	 * @throws IOException if deserialization failed.
+	 * @throws StreamTestFailedException if the validation fails.
+	 */
 	private Action processMessage(byte[] bytes)
 			throws IOException, StreamTestFailedException {
 
@@ -110,7 +123,9 @@ public class OutputListener<OUT> implements Callable<Boolean> {
 		byte[] out;
 
 		switch (type) {
-			case START:
+			case OPEN:
+				//Received a open message one of the sink instances
+				//--> Memorize the index and the parallelism.
 				if (participatingSinks.isEmpty()) {
 					verifier.init();
 				}
@@ -121,31 +136,39 @@ public class OutputListener<OUT> implements Callable<Boolean> {
 
 				break;
 			case SER:
+				//Received a type serializer
+				//--> if it's the first save it.
 				if (typeSerializer == null) {
 					out = type.getPayload(bytes);
 					typeSerializer = SerializeUtil.deserialize(out);
 				}
 				break;
-			case ELEM:
+			case REC:
+				//Received a record message from the sink.
+				//--> call the verifier and the finishing trigger.
 				out = type.getPayload(bytes);
 				OUT elem = SerializeUtil.deserialize(out, typeSerializer);
 				numRecords++;
 				verifier.receive(elem);
-				//
-				if(numRecords >= maxElements) {
+				if(trigger.onRecord(elem) ||
+						trigger.onRecordCount(numRecords)) {
 					return Action.ABORT;
 				}
 				break;
-			case END:
+			case CLOSE:
+				//Received a close message
+				//--> register the index of the closed sink instance.
 				msg = new String(bytes);
 				int sinkIndex = Integer.parseInt(msg.split(" ")[1]);
-				finishedSinks.add(sinkIndex);
+				closedSinks.add(sinkIndex);
 				break;
 		}
-		if (finishedSinks.size() >= parallelism) {
+		//check if all sink instances have been closed.
+		if (closedSinks.size() >= parallelism) {
 			if (participatingSinks.size() != parallelism) {
 				throw new IOException("not all parallel sinks have been initialized");
 			}
+			//finish the listening process
 			return Action.FINISH;
 		}
 		return Action.CONTINUE;

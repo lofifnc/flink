@@ -15,33 +15,43 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.core.output;
+package org.apache.flink.streaming.test.tool.runtime.output;
 
-import org.apache.flink.streaming.test.tool.runtime.output.OutputVerifier;
 import org.apache.flink.streaming.test.tool.runtime.StreamTestFailedException;
 
-public abstract class OutputTranslator<IN,OUT> implements OutputVerifier<IN> {
+import java.util.ArrayList;
+import java.util.List;
 
-	OutputVerifier<OUT> verifier;
+/**
+ * Extend this abstract class a simple {@link OutputVerifier}
+ * the verify method will be called after the final
+ * record has arrived in the sink
+ * @param <T>
+ */
+public abstract class SimpleOutputVerifier<T> implements OutputVerifier<T> {
 
-	public OutputTranslator(OutputVerifier<OUT> verifier) {
-		this.verifier = verifier;
-	}
+	private List<T> output = new ArrayList<>();
 
-	protected abstract OUT translate(IN record);
+	/**
+	 * This method is called once all output has arrived in the {@link TestSink}
+	 * to verify the output.
+	 * @param output from the test run
+	 */
+	abstract public void verify(List<T> output) throws StreamTestFailedException;
 
 	@Override
 	public void init() {
-		verifier.init();
+		output = new ArrayList<>();
 	}
 
 	@Override
-	public void receive(IN record) throws StreamTestFailedException {
-		verifier.receive(translate(record));
+	public void receive(T record) throws StreamTestFailedException {
+		output.add(record);
 	}
 
 	@Override
 	public void finish() throws StreamTestFailedException {
-		verifier.finish();
+		verify(output);
 	}
+
 }

@@ -18,7 +18,7 @@
 package org.apache.flink.streaming.test.tool.core.output;
 
 import org.apache.flink.streaming.test.tool.core.output.matcher.MatcherBuilder;
-import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
+import org.apache.flink.streaming.test.tool.core.assertion.OutputMatcher;
 import org.hamcrest.Description;
 
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * This class is used to define expectations
- * for the input of a {@link org.apache.flink.streaming.test.tool.output.TestSink}
+ * for the input of a {@link org.apache.flink.streaming.test.tool.runtime.output.TestSink}
  * @param <T>
  */
 public class ExpectedOutput<T> extends OutputMatcher<T> {

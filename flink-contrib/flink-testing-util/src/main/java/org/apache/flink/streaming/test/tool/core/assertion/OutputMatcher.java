@@ -16,37 +16,29 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.core;
+package org.apache.flink.streaming.test.tool.core.assertion;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
-/**
- * Data structure mapping a {@link String} key to a {@link Matcher}.
- * <p>
- * Used for defining matchers that work on {@link TupleMap}.
- */
-public class KeyMatcherPair {
+abstract public class OutputMatcher<T> extends BaseMatcher<Iterable<T>> {
+	public static <T> OutputMatcher<T> create(final Matcher<Iterable<T>> matcher) {
+		return new OutputMatcher<T>() {
+			@Override
+			public boolean matches(Object item) {
+				return matcher.matches(item);
+			}
 
-	public final String key;
+			@Override
+			public void describeMismatch(Object item, Description mismatchDescription) {
+				matcher.describeMismatch(item,mismatchDescription);
+			}
 
-	public final Matcher matcher;
-
-	public KeyMatcherPair(String key, Matcher matcher) {
-		this.matcher = matcher;
-		this.key = key;
+			@Override
+			public void describeTo(Description description) {
+				matcher.describeTo(description);
+			}
+		};
 	}
-
-	/**
-	 * Factory method.
-	 * @param key string key.
-	 * @param matcher {@link Matcher}.
-	 * @return new instance of this class.
-	 */
-	public static KeyMatcherPair of(
-			String key,
-			Matcher matcher
-	) {
-		return new KeyMatcherPair(key, matcher);
-	}
-
 }

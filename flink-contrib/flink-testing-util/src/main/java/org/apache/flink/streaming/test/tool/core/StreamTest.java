@@ -20,27 +20,31 @@ package org.apache.flink.streaming.test.tool.core;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.test.tool.input.EventTimeInput;
-import org.apache.flink.streaming.test.tool.input.Input;
-import org.apache.flink.streaming.test.tool.output.OutputVerifier;
-import org.apache.flink.streaming.test.tool.output.TestSink;
-import org.apache.flink.streaming.test.tool.output.assertion.HamcrestVerifier;
-import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
+import org.apache.flink.streaming.test.tool.runtime.VerifyFinishedTrigger;
+import org.apache.flink.streaming.test.tool.runtime.input.EventTimeInput;
+import org.apache.flink.streaming.test.tool.runtime.input.Input;
+import org.apache.flink.streaming.test.tool.runtime.output.OutputVerifier;
+import org.apache.flink.streaming.test.tool.runtime.output.TestSink;
+import org.apache.flink.streaming.test.tool.core.assertion.HamcrestVerifier;
+import org.apache.flink.streaming.test.tool.core.assertion.OutputMatcher;
 import org.apache.flink.streaming.test.tool.runtime.StreamTestEnvironment;
 import org.junit.After;
 import org.junit.Before;
 
 /**
  * Offers a base for testing flink streaming applications
- * To use, extend your UnitTest class with this class.
+ * To use, extend your JUnitTest with this class.
  */
 public class StreamTest {
 
 	/**
-	 * stream environment
+	 * Test Environment
 	 */
 	private StreamTestEnvironment env;
 
+	/**
+	 * Creates a new {@link StreamTestEnvironment}
+	 */
 	@Before
 	public void initialize() throws Exception {
 		env = StreamTestEnvironment.createTestEnvironment(2);
@@ -82,8 +86,44 @@ public class StreamTest {
 		return env.createTestSink(verifier);
 	}
 
+	/**
+	 * Creates a TestSink using {@link org.hamcrest.Matcher} to verify the output.
+	 *
+	 * @param matcher of type Iterable<IN>
+	 * @param <IN>
+	 * @return the created sink.
+	 */
+	public <IN> TestSink<IN> createTestSink(org.hamcrest.Matcher<Iterable<IN>> matcher,
+											VerifyFinishedTrigger trigger) {
+		OutputVerifier<IN> verifier = new HamcrestVerifier<>(matcher);
+		return env.createTestSink(verifier,trigger);
+	}
+
+	/**
+	 * Inspect a {@link DataStream} using a {@link OutputMatcher}.
+	 *
+	 * @param stream  {@link DataStream} to test.
+	 * @param matcher {@link OutputMatcher} to use.
+	 * @param <T>     type of the stream.
+	 */
 	public <T> void assertStream(DataStream<T> stream, OutputMatcher<T> matcher) {
 		stream.addSink(createTestSink(matcher));
+	}
+
+
+	/**
+	 * Inspect a {@link DataStream} using a {@link OutputMatcher}.
+	 *
+	 * @param stream  {@link DataStream} to test.
+	 * @param matcher {@link OutputMatcher} to use.
+	 * @param trigger {@link VerifyFinishedTrigger}
+	 *                to finish the assertion early.
+	 * @param <T>     type of the stream.
+	 */
+	public <T> void assertStream(DataStream<T> stream,
+								 OutputMatcher<T> matcher,
+								 VerifyFinishedTrigger trigger) {
+		stream.addSink(createTestSink(matcher,trigger));
 	}
 
 	public void setParallelism(int n) {
@@ -91,14 +131,14 @@ public class StreamTest {
 	}
 
 	/**
-	 * Executes the test and verifies the output received by the sinks
+	 * Executes the test and verifies the output received by the sinks.
 	 */
 	@After
 	public void executeTest() throws Throwable {
-		try{
+		try {
 			env.executeTest();
-		}catch(AssertionError assertionError){
-			if(env.hasBeenStopped()) {
+		} catch (AssertionError assertionError) {
+			if (env.hasBeenStopped()) {
 				//the execution has been forcefully stopped inform the user!
 				throw new AssertionError("Test terminated due timeout!" +
 						assertionError.getMessage());

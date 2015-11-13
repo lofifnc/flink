@@ -21,22 +21,49 @@ package org.apache.flink.streaming.test.tool.core;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.flink.api.java.tuple.Tuple;
 
+/**
+ * Wraps a {@link Tuple} with keys to it's values
+ * @param <T>
+ */
 public class TupleMap<T extends Tuple>{
 
 	private final T tuple;
 	private String[] keys;
 
-	public TupleMap(T tuple,String... names) {
-		//TODO check length
+	/**
+	 * Default constructor
+	 *
+	 * @param tuple wrapped {@link Tuple}.
+	 * @param keys key strings.
+	 */
+	public TupleMap(T tuple,String[] keys) {
+		if(keys.length > tuple.getArity()) {
+			throw new IllegalArgumentException("Array of keys is longer" +
+					" than the arity of the tuple!");
+		}
 		this.tuple = tuple;
-		keys = names;
+		this.keys = keys;
 	}
 
+	/**
+	 * Returns the value of a key.
+	 *
+	 * @param key string.
+	 * @param <IN> return type.
+	 * @return value
+	 */
 	public <IN> IN get(String key) {
 		int index = ArrayUtils.indexOf(keys, key);
+		if(index < 0) {
+			throw new IllegalArgumentException("Key not found!");
+		}
 		return tuple.getField(index);
 	}
 
+	/**
+	 * Provides the list of keys
+	 * @return Array of string keys.
+	 */
 	public String[] getKeys() {
 		return keys;
 	}

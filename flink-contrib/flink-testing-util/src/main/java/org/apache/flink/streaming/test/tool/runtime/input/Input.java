@@ -15,33 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.test.tool.core.output;
+package org.apache.flink.streaming.test.tool.runtime.input;
 
-import org.apache.flink.streaming.test.tool.runtime.output.OutputVerifier;
-import org.apache.flink.streaming.test.tool.runtime.StreamTestFailedException;
+import java.util.List;
 
-public abstract class OutputTranslator<IN,OUT> implements OutputVerifier<IN> {
-
-	OutputVerifier<OUT> verifier;
-
-	public OutputTranslator(OutputVerifier<OUT> verifier) {
-		this.verifier = verifier;
-	}
-
-	protected abstract OUT translate(IN record);
-
-	@Override
-	public void init() {
-		verifier.init();
-	}
-
-	@Override
-	public void receive(IN record) throws StreamTestFailedException {
-		verifier.receive(translate(record));
-	}
-
-	@Override
-	public void finish() throws StreamTestFailedException {
-		verifier.finish();
-	}
+/**
+ * Implement this interface when you want to provide input for tests.
+ * @param <T>
+ */
+public interface Input<T> {
+	List<T> getInput();
 }

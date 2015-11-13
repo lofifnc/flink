@@ -18,7 +18,7 @@
 package org.apache.flink.streaming.test.tool.core.input
 
 import org.apache.flink.streaming.test.tool.CoreSpec
-import org.apache.flink.streaming.test.tool.input.EventTimeInput
+import org.apache.flink.streaming.test.tool.runtime.input.EventTimeInput
 
 import scala.collection.JavaConversions._
 

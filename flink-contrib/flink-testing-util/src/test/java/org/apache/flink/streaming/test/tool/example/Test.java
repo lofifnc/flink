@@ -22,8 +22,9 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.test.tool.core.StreamTest;
 import org.apache.flink.streaming.test.tool.core.output.ExpectedOutput;
-import org.apache.flink.streaming.test.tool.output.assertion.AssertBlock;
-import org.apache.flink.streaming.test.tool.output.assertion.OutputMatcher;
+import org.apache.flink.streaming.test.tool.core.assertion.AssertBlock;
+import org.apache.flink.streaming.test.tool.core.assertion.OutputMatcher;
+import org.apache.flink.streaming.test.tool.runtime.FinishAtCount;
 
 import static org.apache.flink.streaming.test.tool.core.Sugar.after;
 import static org.apache.flink.streaming.test.tool.core.Sugar.before;
@@ -52,7 +53,7 @@ public class Test extends StreamTest {
 
 
 	@org.junit.Test
-	public void testWindowing() throws Exception {
+	public void testWindowing() {
 
 //		TupleMask<Tuple2<Integer,String>> mask = TupleMask.create("value","name");
 
@@ -75,11 +76,11 @@ public class Test extends StreamTest {
 						.eachOfThem().onEachRecord();
 
 		//------- test execution
-		assertStream(window(testStream), matcher);
+		assertStream(window(testStream), matcher, FinishAtCount.of(5));
 	}
 
 	@org.junit.Test
-	public void testMap() throws Exception {
+	public void testMap() {
 
 		setParallelism(2);
 

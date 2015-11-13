@@ -29,9 +29,9 @@ import java.util.Arrays;
  */
 public enum MessageType {
 
-	START("START".getBytes()),
-	END("END".getBytes()),
-	ELEM("ELEM".getBytes()),
+	OPEN("OPEN".getBytes()),
+	CLOSE("CLOSE".getBytes()),
+	REC("REC".getBytes()),
 	SER("SER".getBytes());
 
 	/** byte representation of the message identifier */
