@@ -48,7 +48,7 @@ public class OneOf<T> extends WhileRecord<T> {
 	}
 
 	@Override
-	public boolean validWhile(int matches) {
+	public boolean validWhile(int matches, int mismatches) {
 		return matches <= 1;
 	}
 

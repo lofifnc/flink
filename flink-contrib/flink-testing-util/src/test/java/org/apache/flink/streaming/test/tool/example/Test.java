@@ -21,18 +21,21 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.test.tool.core.StreamTest;
-import org.apache.flink.streaming.test.tool.core.output.ExpectedOutput;
 import org.apache.flink.streaming.test.tool.core.assertion.AssertBlock;
 import org.apache.flink.streaming.test.tool.core.assertion.OutputMatcher;
-import org.apache.flink.streaming.test.tool.runtime.FinishAtCount;
+import org.apache.flink.streaming.test.tool.core.output.ExpectedOutput;
 
 import static org.apache.flink.streaming.test.tool.core.Sugar.after;
 import static org.apache.flink.streaming.test.tool.core.Sugar.before;
 import static org.apache.flink.streaming.test.tool.core.Sugar.seconds;
 import static org.apache.flink.streaming.test.tool.core.Sugar.startWith;
 import static org.apache.flink.streaming.test.tool.core.Sugar.times;
+import static org.apache.flink.streaming.test.tool.core.assertion.OutputMatchers.allOf;
+import static org.apache.flink.streaming.test.tool.core.assertion.OutputMatchers.outputWithSize;
 import static org.hamcrest.Matchers.either;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
 
 public class Test extends StreamTest {
 
@@ -71,12 +74,14 @@ public class Test extends StreamTest {
 		//------- output definition
 		OutputMatcher<Tuple2<Integer, String>> matcher =
 				new AssertBlock<Tuple2<Integer,String>>("value","name")
-						.assertThat("value", is(3))
-						.assertThat("name", either(is("fritz")).or(is("peter")))
-						.eachOfThem().onEachRecord();
+						.assertThat("value", is(2))
+						.assertThat("name", either(is("ritz")).or(is("eter")))
+						.oneOfThem().onEachRecord();
+
+		OutputMatcher<Tuple2<Integer,String>> size = outputWithSize(greaterThan(10));
 
 		//------- test execution
-		assertStream(window(testStream), matcher, FinishAtCount.of(5));
+		assertStream(window(testStream), allOf(matcher, size));
 	}
 
 	@org.junit.Test

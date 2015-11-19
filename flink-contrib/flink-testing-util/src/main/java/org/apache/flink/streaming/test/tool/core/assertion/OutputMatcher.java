@@ -22,6 +22,10 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
+/**
+ *
+ * @param <T>
+ */
 abstract public class OutputMatcher<T> extends BaseMatcher<Iterable<T>> {
 	public static <T> OutputMatcher<T> create(final Matcher<Iterable<T>> matcher) {
 		return new OutputMatcher<T>() {

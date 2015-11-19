@@ -52,8 +52,8 @@ public class AtMost<T> extends WhileRecord<T> {
 	}
 
 	@Override
-	public boolean validWhile(int matches) {
-		return matches <= n;
+	public boolean validWhile(int numMatches, int numMismatches) {
+		return numMatches <= n;
 	}
 
 	@Factory

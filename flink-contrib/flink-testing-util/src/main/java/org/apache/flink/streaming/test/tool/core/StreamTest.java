@@ -28,11 +28,12 @@ import org.apache.flink.streaming.test.tool.runtime.output.TestSink;
 import org.apache.flink.streaming.test.tool.core.assertion.HamcrestVerifier;
 import org.apache.flink.streaming.test.tool.core.assertion.OutputMatcher;
 import org.apache.flink.streaming.test.tool.runtime.StreamTestEnvironment;
+import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 
 /**
- * Offers a base for testing flink streaming applications
+ * Offers a base for testing Flink streaming applications
  * To use, extend your JUnitTest with this class.
  */
 public class StreamTest {
@@ -82,7 +83,7 @@ public class StreamTest {
 	 * @return the created sink.
 	 */
 	public <IN> TestSink<IN> createTestSink(org.hamcrest.Matcher<Iterable<IN>> matcher) {
-		OutputVerifier<IN> verifier = new HamcrestVerifier<>(matcher);
+		OutputVerifier<IN> verifier = new HamcrestVerifier<IN>(matcher);
 		return env.createTestSink(verifier);
 	}
 
@@ -110,6 +111,16 @@ public class StreamTest {
 		stream.addSink(createTestSink(matcher));
 	}
 
+	/**
+	 * Inspect a {@link DataStream} using a {@link OutputMatcher}.
+	 *
+	 * @param stream  {@link DataStream} to test.
+	 * @param matcher {@link OutputMatcher} to use.
+	 * @param <T>     type of the stream.
+	 */
+	public <T> void assertStream(DataStream<T> stream, Matcher<Iterable<T>> matcher) {
+		stream.addSink(createTestSink(matcher));
+	}
 
 	/**
 	 * Inspect a {@link DataStream} using a {@link OutputMatcher}.

@@ -32,12 +32,12 @@ import java.util.List;
 abstract public class WhileTuple<T extends Tuple> extends TypeSafeDiagnosingMatcher<T> {
 	//TODO play with description
 
-	private final Iterable<KeyMatcherPair> matcherKeyPairs;
+	private final Iterable<KeyMatcherPair> keyMatcherPairs;
 	private final TupleMask<T> table;
 
 	public WhileTuple(Iterable<KeyMatcherPair> matchers,
 					TupleMask<T> table) {
-		this.matcherKeyPairs = matchers;
+		this.keyMatcherPairs = matchers;
 		this.table = table;
 	}
 
@@ -46,13 +46,18 @@ abstract public class WhileTuple<T extends Tuple> extends TypeSafeDiagnosingMatc
 
 		TupleMap tupleMap = table.convert(tuple);
 		int matches = 0;
-		for (KeyMatcherPair matcherKeyPair : matcherKeyPairs) {
-
-			Object object = tupleMap.get(matcherKeyPair.key);
-			Matcher matcher = matcherKeyPair.matcher;
+		mismatch.appendText("\n         ");
+		for (KeyMatcherPair keyMatcherPair : keyMatcherPairs) {
+			String key = keyMatcherPair.key;
+			Object object = tupleMap.get(key);
+			Matcher matcher = keyMatcherPair.matcher;
 			if (!matcher.matches(object)) {
-				mismatch.appendDescriptionOf(matcher).appendText(" ");
+				mismatch
+						.appendText("[" + key + "] ")
+						.appendDescriptionOf(matcher)
+						.appendText(", ");
 				matcher.describeMismatch(object, mismatch);
+				mismatch.appendText("; ");
 			} else {
 				matches++;
 			// Check exit condition if not valid exit matcher.
@@ -67,11 +72,15 @@ abstract public class WhileTuple<T extends Tuple> extends TypeSafeDiagnosingMatc
 	@Override
 	public void describeTo(Description description) {
 		List<Matcher> matchers = new ArrayList<>();
-		for (KeyMatcherPair m : matcherKeyPairs) {
-			matchers.add(m.matcher);
+		description.appendText("(");
+		for (KeyMatcherPair m : keyMatcherPairs) {
+			if(!description.toString().endsWith("( ")) {
+				description.appendText("; ");
+			}
+			description.appendText("[" + m.key + "] ");
+			description.appendDescriptionOf(m.matcher);
 		}
-		description.appendText(prefix());
-		description.appendList("(", ";" + " ", ")", matchers);
+		description.appendText(")");
 	}
 
 	public abstract boolean validWhile(int matches);

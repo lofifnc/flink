@@ -33,24 +33,29 @@ public abstract class WhileRecord<T> extends TypeSafeDiagnosingMatcher<Iterable<
 
 	@Override
 	public boolean matchesSafely(Iterable<T> objects, Description mismatch) {
-		int matches = 0;
+		System.out.println("mismatch = " + mismatch);
+		int numMatches = 0;
+		int numMismatches = 0;
 		Description mismatches = new StringDescription();
 		int i = 0;
 		for (T item : objects) {
 			if (!matcher.matches(item)) {
-				matcher.describeMismatch(item, mismatches);
-				mismatches.appendText(" on record #"+i);
-			} else {
-				matches++;
-				if (!validWhile(matches)) {
-					describeMismatch(matches, true, mismatch, mismatches);
-					return false;
+				if(numMismatches < 10) {
+					matcher.describeMismatch(item, mismatches);
+					mismatches.appendText("on record #" + (i + 1));
 				}
+				numMismatches++;
+			} else {
+				numMatches++;
+			}
+			if (!validWhile(numMatches, numMismatches)) {
+				describeMismatch(numMatches, numMismatches, true, mismatch, mismatches);
+				return false;
 			}
 			i++;
 		}
-		describeMismatch(matches, false, mismatch, mismatches);
-		return validAfter(matches);
+		describeMismatch(numMatches, numMismatches, false, mismatch, mismatches);
+		return validAfter(numMatches);
 	}
 
 	@Override
@@ -59,17 +64,22 @@ public abstract class WhileRecord<T> extends TypeSafeDiagnosingMatcher<Iterable<
 		description.appendDescriptionOf(matcher);
 	}
 
-	private void describeMismatch(int matches,
-								Boolean tooMany,
-								Description mismatch,
-								Description mismatches) {
+	private void describeMismatch(int numMatches,
+								  int numMismatches,
+								  Boolean tooMany,
+								  Description mismatch,
+								  Description mismatches) {
 		mismatch.appendText("expected matches to be ");
 		describeCondition(mismatch);
-		mismatch.appendText(" was ")
-				.appendValue(matches);
+
 		if (tooMany) {
-			mismatch.appendText(" because all records matched, except:");
+			mismatch.appendText(", mismatches was ")
+					.appendValue(numMismatches)
+					.appendText(" because");
+
 		} else {
+			mismatch.appendText(" was ")
+					.appendValue(numMatches);
 			mismatch.appendText(" because: ");
 		}
 
@@ -81,7 +91,7 @@ public abstract class WhileRecord<T> extends TypeSafeDiagnosingMatcher<Iterable<
 
 	public abstract String prefix();
 
-	public abstract boolean validWhile(int matches);
+	public abstract boolean validWhile(int numMatches, int numMismatches);
 
 	public boolean validAfter(int matches) {
 		return true;

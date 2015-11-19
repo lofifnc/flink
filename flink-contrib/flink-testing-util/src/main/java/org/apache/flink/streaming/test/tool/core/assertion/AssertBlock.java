@@ -20,6 +20,7 @@ package org.apache.flink.streaming.test.tool.core.assertion;
 
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.streaming.test.tool.core.KeyMatcherPair;
+import org.apache.flink.streaming.test.tool.core.assertion.result.RecordsMatchers;
 import org.apache.flink.streaming.test.tool.core.output.TupleMask;
 import org.apache.flink.streaming.test.tool.core.assertion.tuple.TupleMapMatchers;
 import org.hamcrest.Matcher;
@@ -119,15 +120,15 @@ public class AssertBlock<T extends Tuple> {
 		return new ResultMatcher<>(TupleMapMatchers.one(matchers, mask));
 	}
 
-	/**
-	 * Expect the record to fulfill all of the specified asserts.
-	 *
-	 * @return {@link ResultMatcher} to define the number of matching records in
-	 * the output.
-	 */
-	public ResultMatcher<T> eachOfThem() {
-		return new ResultMatcher<>(TupleMapMatchers.each(matchers, mask));
-	}
+//	/**
+//	 * Expect the record to fulfill all of the specified asserts.
+//	 *
+//	 * @return {@link ResultMatcher} to define the number of matching records in
+//	 * the output.
+//	 */
+//	public ResultMatcher<T> eachOfThem() {
+//		return new ResultMatcher<>(TupleMapMatchers.each(matchers, mask));
+//	}
 
 	/**
 	 * Expect the record to fulfill at least exactly n of the specified asserts.
@@ -161,5 +162,84 @@ public class AssertBlock<T extends Tuple> {
 	public ResultMatcher<T> atMostNOfThem(int n) {
 		return new ResultMatcher<>(TupleMapMatchers.atMost(matchers, mask, n));
 	}
+
+	/**
+	 * Creates a {@link OutputMatcher} matching when at least one
+	 * inspected tuple returns a positive match.
+	 *
+	 * @return {@link OutputMatcher}
+	 */
+	public OutputMatcher<T> onAnyRecord() {
+		ResultMatcher<T> matcher = new ResultMatcher<>(TupleMapMatchers.each(matchers,mask));
+		return OutputMatcher.create(matcher.onAnyRecord());
+	}
+
+	/**
+	 * Creates a {@link OutputMatcher} matching when all
+	 * inspected tuples return a positive match.
+	 *
+	 * @return {@link OutputMatcher}
+	 */
+	public OutputMatcher<T> onEachRecord() {
+		ResultMatcher<T> matcher = new ResultMatcher<>(TupleMapMatchers.each(matchers,mask));
+		return OutputMatcher.create(matcher.onEachRecord());
+	}
+
+	/**
+	 * Creates a {@link OutputMatcher} matching when exactly one inspected tuple
+	 * return a positive match.
+	 *
+	 * @return {@link OutputMatcher}
+	 */
+	public OutputMatcher<T> onOneRecord() {
+		ResultMatcher<T> matcher = new ResultMatcher<>(TupleMapMatchers.each(matchers,mask));
+		return OutputMatcher.create(matcher.onOneRecord());
+	}
+
+	/**
+	 * Creates a {@link OutputMatcher} matching when no inspected tuple
+	 * return a positive match.
+	 *
+	 * @return {@link OutputMatcher}
+	 */
+	public OutputMatcher<T> onNoRecord() {
+		ResultMatcher<T> matcher = new ResultMatcher<>(TupleMapMatchers.each(matchers,mask));
+		return OutputMatcher.create(matcher.onNoRecord());
+	}
+
+	/**
+	 * Creates a {@link OutputMatcher} matching when a exact number of
+	 * inspected tuples return a positive match.
+	 *
+	 * @return {@link OutputMatcher}
+	 */
+	public OutputMatcher<T> onExactlyNRecords(int n) {
+		ResultMatcher<T> matcher = new ResultMatcher<>(TupleMapMatchers.each(matchers,mask));
+		return OutputMatcher.create(matcher.onExactlyNRecords(n));
+	}
+
+	/**
+	 * Creates a {@link OutputMatcher} matching when at least a number of
+	 * inspected tuples return a positive match.
+	 *
+	 * @return {@link OutputMatcher}
+	 */
+	public OutputMatcher<T> onAtLeastNRecords(int n) {
+		ResultMatcher<T> matcher = new ResultMatcher<>(TupleMapMatchers.each(matchers,mask));
+		return OutputMatcher.create(matcher.onAtLeastNRecords(n));
+	}
+
+	/**
+	 * Creates a {@link OutputMatcher} matching when at most a number of
+	 * inspected tuples return a positive match.
+	 *
+	 * @return {@link OutputMatcher}
+	 */
+	public OutputMatcher<T> onAtMostNRecords(int n){
+		ResultMatcher<T> matcher = new ResultMatcher<>(TupleMapMatchers.each(matchers,mask));
+		return OutputMatcher.create(matcher.onAtMostNRecords(n));
+	}
+
+
 
 }

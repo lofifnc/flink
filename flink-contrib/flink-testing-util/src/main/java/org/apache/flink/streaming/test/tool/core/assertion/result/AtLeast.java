@@ -25,6 +25,7 @@ import org.hamcrest.Matcher;
 /**
  * Provides a {@link Matcher}s that is successful if at least n
  * items in the examined {@link Iterable} is a positive match.
+ *
  * @param <T>
  */
 public class AtLeast<T> extends UntilRecord<T> {
@@ -33,10 +34,11 @@ public class AtLeast<T> extends UntilRecord<T> {
 
 	/**
 	 * Default Constructor
+	 *
 	 * @param matcher to apply to the {@link Iterable}
-	 * @param n number of expected positive matches
+	 * @param n       number of expected positive matches
 	 */
-	public AtLeast(Matcher<T> matcher,int n) {
+	public AtLeast(Matcher<T> matcher, int n) {
 		super(matcher);
 		this.n = n;
 	}
@@ -47,8 +49,8 @@ public class AtLeast<T> extends UntilRecord<T> {
 	}
 
 	@Override
-	protected boolean validWhen(int matches, int possibleMatches) {
-		return matches == n;
+	protected boolean validWhen(int numMatches, int possibleMatches) {
+		return numMatches == n;
 	}
 
 	@Override

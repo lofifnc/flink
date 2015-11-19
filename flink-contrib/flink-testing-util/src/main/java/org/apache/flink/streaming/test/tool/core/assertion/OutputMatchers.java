@@ -18,6 +18,7 @@
 
 package org.apache.flink.streaming.test.tool.core.assertion;
 
+import org.apache.flink.streaming.test.tool.core.assertion.result.OutputWithSize;
 import org.hamcrest.core.AllOf;
 import org.hamcrest.core.AnyOf;
 import org.hamcrest.core.IsNot;
@@ -29,9 +30,6 @@ public class OutputMatchers {
 
 	/**
 	 * Creates a matcher that matches if the examined object matches <b>ALL</b> of the specified matchers.
-	 * <p/>
-	 * For example:
-	 * <pre>assertThat("myValue", allOf(startsWith("my"), containsString("Val")))</pre>
 	 */
 	@SafeVarargs
 	public static <T> OutputMatcher<T> allOf(OutputMatcher<T>... matchers) {
@@ -41,21 +39,15 @@ public class OutputMatchers {
 
 	/**
 	 * Creates a matcher that matches if the examined object matches <b>ANY</b> of the specified matchers.
-	 * <p/>
-	 * For example:
-	 * <pre>assertThat("myValue", anyOf(startsWith("foo"), containsString("Val")))</pre>
 	 */
 	@SafeVarargs
-	public static <T> OutputMatcher anyOf(OutputMatcher<T>... matchers) {
-		return OutputMatcher.create(AnyOf.anyOf(matchers));
+	public static <T> OutputMatcher<T> anyOf(OutputMatcher<T>... matchers) {
+		return OutputMatcher.create(AnyOf.<Iterable<T>>anyOf(matchers));
 	}
 
 	/**
 	 * Creates a matcher that wraps an existing matcher, but inverts the logic by which
 	 * it will match.
-	 * <p/>
-	 * For example:
-	 * <pre>assertThat(cheese, is(not(equalTo(smelly))))</pre>
 	 *
 	 * @param matcher
 	 *     the matcher whose sense should be inverted
@@ -76,12 +68,31 @@ public class OutputMatchers {
 
 	/**
 	 * Creates a matcher that matches when either of the specified matchers match the examined object.
-	 * <p/>
-	 * For example:
-	 * <pre>assertThat("fan", either(containsString("a")).and(containsString("b")))</pre>
 	 */
 	public static <LHS> org.hamcrest.core.CombinableMatcher.CombinableEitherMatcher<Iterable<LHS>> either(OutputMatcher<LHS> matcher) {
 		return org.hamcrest.core.CombinableMatcher.either(matcher);
+	}
+
+	/**
+	 * Creates a matcher for output that matches when the <code>size</code> of the output
+	 * satisfies the specified matcher.
+	 *
+	 * @param sizeMatcher
+	 *     a matcher for the length of an examined array
+	 */
+	public static <E> OutputMatcher<E> outputWithSize(org.hamcrest.Matcher<? super java.lang.Integer> sizeMatcher) {
+		return OutputMatcher.create(OutputWithSize.<E>outputWithSize(sizeMatcher));
+	}
+
+	/**
+	 * Creates a matcher for output that matches when the <code>length</code> of the output
+	 * equals the specified <code>size</code>.
+	 *
+	 * @param size
+	 *     the length that an examined array must have for a positive match
+	 */
+	public static <E> OutputMatcher<E> outputWithSize(int size) {
+		return OutputMatcher.create(OutputWithSize.<E>outputWithSize(size));
 	}
 
 }

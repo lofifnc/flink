@@ -20,7 +20,6 @@ package org.apache.flink.streaming.test.tool.runtime.input;
 
 import com.google.common.collect.Iterables;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.InputViewDataInputStreamWrapper;
 import org.apache.flink.streaming.api.checkpoint.CheckpointedAsynchronously;

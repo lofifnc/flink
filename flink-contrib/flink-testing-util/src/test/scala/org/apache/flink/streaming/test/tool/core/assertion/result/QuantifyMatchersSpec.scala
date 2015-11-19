@@ -27,7 +27,7 @@ class QuantifyMatchersSpec extends CoreSpec {
   //TODO make this test better readable
   val list = List(1,2,3,4,5,6,7,8)
 
-  "The matcher" should "implement any" in {
+  "The AnyOf matcher" should "implement any" in {
     AnyOf.any(Matchers.is(2))
       .matches(list.asJava) should be(true)
     AnyOf.any(Matchers.greaterThan(new Integer(2)))
@@ -38,7 +38,7 @@ class QuantifyMatchersSpec extends CoreSpec {
       .matches(list.asJava) should be(false)
   }
 
-  "The matcher" should "implement each" in {
+  "The EachOf matcher" should "implement each" in {
     EachOf.each(Matchers.is(2))
       .matches(list.asJava) should be(false)
     EachOf.each(Matchers.greaterThan(new Integer(2)))
@@ -49,7 +49,7 @@ class QuantifyMatchersSpec extends CoreSpec {
       .matches(list.asJava) should be(false)
   }
 
-  "The matcher" should "implement one" in {
+  "The OneOf matcher" should "implement one" in {
     OneOf.one(Matchers.is(2))
       .matches(list.asJava) should be(true)
     OneOf.one(Matchers.greaterThan(new Integer(2)))
@@ -60,7 +60,7 @@ class QuantifyMatchersSpec extends CoreSpec {
       .matches(list.asJava) should be(false)
   }
 
-  "The matcher" should "implement atLeast" in {
+  "The AtLeast matcher" should "implement atLeast" in {
     AtLeast.atLeast(Matchers.is(2),2)
       .matches(list.asJava) should be(false)
     AtLeast.atLeast(Matchers.greaterThan(new Integer(6)),2)
@@ -71,7 +71,7 @@ class QuantifyMatchersSpec extends CoreSpec {
       .matches(list.asJava) should be(false)
   }
 
-  "The matcher" should "implement atMost" in {
+  "The Exactly matcher" should "implement atMost" in {
     Exactly.exactly(Matchers.is(2),2)
       .matches(list.asJava) should be(false)
     Exactly.exactly(Matchers.greaterThan(new Integer(6)),2)
@@ -82,7 +82,7 @@ class QuantifyMatchersSpec extends CoreSpec {
       .matches(list.asJava) should be(false)
   }
 
-  "The matcher" should "implement none" in {
+  "The None matcher" should "implement none" in {
     RecordsMatchers.none(Matchers.is(2))
       .matches(list.asJava) should be(false)
     RecordsMatchers.none(Matchers.greaterThan(new Integer(2)))

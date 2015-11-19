@@ -34,24 +34,29 @@ public abstract class UntilRecord<T> extends TypeSafeDiagnosingMatcher<Iterable<
 
 	@Override
 	public boolean matchesSafely(Iterable<T> objects, Description mismatch) {
-		int matches = 0;
+		int numMatches = 0;
+		int numMismatches = 0;
 		int possibleMatches = Iterables.size(objects);
 		int i = 0;
 		Description mismatches = new StringDescription();
 		for (T item : objects) {
-			if (!matcher.matches(item)) {
-				matcher.describeMismatch(item, mismatches);
-				mismatches.appendText(" on record #"+i);
-			} else {
-				matches++;
 
-				if (validWhen(matches, possibleMatches)) {
+			if (!matcher.matches(item)) {
+				if(numMismatches < 10) {
+					matcher.describeMismatch(item, mismatches);
+					mismatches.appendText("on record #" + (i + 1));
+				}
+				numMismatches++;
+			} else {
+				numMatches++;
+
+				if (validWhen(numMatches, possibleMatches)) {
 					return true;
 				}
 			}
 			i++;
 		}
-		describeMismatch(matches, mismatch, mismatches);
+		describeMismatch(numMatches, mismatch, mismatches);
 		return false;
 	}
 

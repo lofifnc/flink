@@ -27,7 +27,7 @@ import org.hamcrest.Matcher;
  * the items in the examined {@link Iterable} is a positive match.
  * @param <T>
  */
-public class EachOf<T> extends UntilRecord<T> {
+public class EachOf<T> extends WhileRecord<T> {
 
 	/**
 	 * Default Constructor
@@ -43,8 +43,8 @@ public class EachOf<T> extends UntilRecord<T> {
 	}
 
 	@Override
-	public boolean validWhen(int matches, int possibleMatches) {
-		return matches == possibleMatches;
+	public boolean validWhile(int numMatches, int numMismatches) {
+		return numMismatches <= 0;
 	}
 
 	@Override
