@@ -24,6 +24,7 @@ import org.apache.flink.streaming.test.tool.core.StreamTest;
 import org.apache.flink.streaming.test.tool.core.assertion.AssertBlock;
 import org.apache.flink.streaming.test.tool.core.assertion.OutputMatcher;
 import org.apache.flink.streaming.test.tool.core.output.ExpectedOutput;
+import org.apache.flink.streaming.test.tool.runtime.FinishAtCount;
 
 import static org.apache.flink.streaming.test.tool.core.Sugar.after;
 import static org.apache.flink.streaming.test.tool.core.Sugar.before;
@@ -53,8 +54,6 @@ public class Test extends StreamTest {
 		});
 	}
 
-
-
 	@org.junit.Test
 	public void testWindowing() {
 
@@ -74,14 +73,15 @@ public class Test extends StreamTest {
 		//------- output definition
 		OutputMatcher<Tuple2<Integer, String>> matcher =
 				new AssertBlock<Tuple2<Integer,String>>("value","name")
-						.assertThat("value", is(2))
-						.assertThat("name", either(is("ritz")).or(is("eter")))
+						.assertThat("value", is(3))
+						.assertThat("name", either(is("fritz")).or(is("eter")))
 						.oneOfThem().onEachRecord();
 
 		OutputMatcher<Tuple2<Integer,String>> size = outputWithSize(greaterThan(10));
 
 		//------- test execution
-		assertStream(window(testStream), allOf(matcher, size));
+		assertStream(window(testStream), allOf(matcher, size), FinishAtCount.of(10));
+
 	}
 
 	@org.junit.Test
@@ -100,6 +100,7 @@ public class Test extends StreamTest {
 		ExpectedOutput<Tuple2<String, Integer>> expectedOutput = new ExpectedOutput<Tuple2<String, Integer>>()
 				.expect(Tuple2.of("test", 1))
 				.expect(Tuple2.of("foo", 2));
+		expectedOutput.refine().noDuplicates().inOrder().all();
 
 		//-------- test execution
 		assertStream(swap(stream), expectedOutput);

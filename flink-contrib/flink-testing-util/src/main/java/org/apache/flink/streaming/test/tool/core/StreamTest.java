@@ -32,6 +32,8 @@ import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 
+import java.util.Collection;
+
 /**
  * Offers a base for testing Flink streaming applications
  * To use, extend your JUnitTest with this class.
@@ -61,6 +63,19 @@ public class StreamTest {
 	 * @return a DataStreamSource generating the input
 	 */
 	public <OUT> DataStreamSource<OUT> createTestStream(EventTimeInput<OUT> input) {
+		return env.fromInput(input);
+	}
+
+	/**
+	 * Creates a DataStreamSource from an EventTimeInput object.
+	 * The DataStreamSource will emit the records with the specified EventTime.
+	 *
+	 * @param input to emit
+	 * @param <OUT> type of the emitted records
+	 * @return a DataStreamSource generating the input
+	 *
+	 */
+	public <OUT> DataStreamSource<OUT> createTestStream(Collection<OUT> input) {
 		return env.fromInput(input);
 	}
 

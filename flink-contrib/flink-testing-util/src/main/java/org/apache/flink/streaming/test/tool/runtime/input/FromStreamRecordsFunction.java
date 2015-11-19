@@ -44,7 +44,8 @@ import java.util.List;
  *
  * @param <T> The type of elements returned by this function.
  */
-public class FromStreamRecordsFunction<T> implements EventTimeSourceFunction<T>, CheckpointedAsynchronously<Integer> {
+public class FromStreamRecordsFunction<T>
+		implements EventTimeSourceFunction<T>, CheckpointedAsynchronously<Integer> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -70,7 +71,9 @@ public class FromStreamRecordsFunction<T> implements EventTimeSourceFunction<T>,
 	private final List<Long> watermarkList;
 
 
-	public FromStreamRecordsFunction(TypeSerializer<StreamRecord<T>> serializer, Iterable<StreamRecord<T>> elements) throws IOException {
+	public FromStreamRecordsFunction(TypeSerializer<StreamRecord<T>> serializer,
+									 Iterable<StreamRecord<T>> elements)
+			throws IOException {
 
 		ByteArrayOutputStream baos =SerializeUtil.serializeOutput(elements,serializer);
 

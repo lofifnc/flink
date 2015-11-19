@@ -328,6 +328,10 @@ public class StreamTestEnvironment extends TestStreamEnvironment {
 		return addSource(function, "Collection Source", outType).setParallelism(1);
 	}
 
+	public <OUT> DataStreamSource<OUT> fromInput(Collection<OUT> input) {
+		return super.fromCollection(input);
+	}
+
 	/**
 	 * This method can be used to check if the environment has been
 	 * stopped prematurely by e.g. a timeout.

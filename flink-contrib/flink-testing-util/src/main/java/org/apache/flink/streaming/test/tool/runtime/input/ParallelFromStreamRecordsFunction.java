@@ -37,6 +37,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * A stream source function that returns a sequence of elements with given TimeStamps.
+ *
+ * <p>Upon construction, this source function serializes the elements using Flink's type information.
+ * That way, any object transport using Java serialization will not be affected by the serializability
+ * of the elements.</p>
+ *
+ * @param <T> The type of elements returned by this function.
+ */
 public class ParallelFromStreamRecordsFunction<T> extends RichEventTimeSourceFunction<T>
 		implements CheckpointedAsynchronously<Integer> {
 
@@ -116,11 +125,7 @@ public class ParallelFromStreamRecordsFunction<T> extends RichEventTimeSourceFun
 		}
 		//calculate watermarks
 		watermarks = Util.calculateWatermarks(outputSplit);
-
-		//-----------------------------------------------------------------
 		// if we restored from a checkpoint and need to skip elements, skip them now.
-		//-----------------------------------------------------------------
-
 		this.numElementsEmitted = this.numElementsToSkip;
 
 		//-----------------------------------------------------------------
@@ -195,6 +200,7 @@ public class ParallelFromStreamRecordsFunction<T> extends RichEventTimeSourceFun
 			}
 		} while (viewedAs.isAssignableFrom(elem.getClass()));
 
-		throw new IllegalArgumentException("The elements in the collection are not all subclasses of " + viewedAs.getCanonicalName());
+		throw new IllegalArgumentException("The elements in the collection are not all subclasses of "
+				+ viewedAs.getCanonicalName());
 	}
 }
